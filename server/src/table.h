@@ -1,15 +1,18 @@
 
 typedef struct Table {
-    int id;
     char *name;
     int rows;
     int cols;
     char ***data;
 } Table;
 
-Table* create_table(int id, char *name, int ncols, char **cols);
+Table* create_table(char *name, int ncols, char **cols);
 
 void delete_table(Table *table);
+
+Table* load_table(char *filename);
+
+void save_table(Table *table);
 
 void insert_table(Table *table, char **reg);
 

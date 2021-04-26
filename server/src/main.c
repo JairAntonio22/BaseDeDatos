@@ -5,7 +5,7 @@
 int main(void) {
     char *cols[] = {"Nombre", "Apellido", "Edad", "Sexo"};
 
-    Table *table = create_table(0, "Personas", 4, cols);
+    Table *table = create_table("Personas", 4, cols);
 
     char *row1[] = {"Jair", "Antonio", "21", "Hombre"};
     insert_table(table, row1);
@@ -19,6 +19,8 @@ int main(void) {
     insert_table(table, row3);
 
     print_table(table);
+
+    save_table(table);
 
     delete_table(table);
 }

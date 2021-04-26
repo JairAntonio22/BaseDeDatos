@@ -4,10 +4,9 @@
 
 #include "table.h"
 
-Table* create_table(int id, char *name, int ncols, char **cols) {
+Table* create_table(char *name, int ncols, char **cols) {
     Table *table = (Table*) malloc(sizeof(Table));
 
-    table->id = id;
     table->name = strdup(name);
     table->rows = 1;
     table->cols = ncols;
@@ -34,6 +33,29 @@ void delete_table(Table *table) {
     
     free(table->data);
     free(table);
+}
+
+Table* load_table(char *filename) {
+    return NULL;
+}
+
+void save_table(Table *table) {
+    char *filename = (char*) calloc(sizeof(char), strlen(table->name) + 5);
+    strcpy(filename, table->name);
+    strcat(filename, ".csv");
+    
+    FILE *file = fopen(filename, "w");
+    
+    for (int i = 0; i < table->rows; i++) {
+        for (int j = 0; j < table->cols - 1; j++) {
+            fprintf(file, "%s,", table->data[i][j]);
+        }
+
+        fprintf(file, "%s\n", table->data[i][table->cols - 1]);
+    }
+
+    free(filename);
+    fclose(file);
 }
 
 void insert_table(Table *table, char **reg) {
