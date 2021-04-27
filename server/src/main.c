@@ -3,6 +3,7 @@
 #include "table.h"
 
 int main(void) {
+    /*
     char *cols[] = {"Nombre", "Apellido", "Edad", "Sexo"};
 
     Table *table = create_table("Personas", 4, cols);
@@ -17,10 +18,11 @@ int main(void) {
 
     char *row3[] = {"Jorge", "Benitez", "21", "Hombre"};
     insert_table(table, row3);
+    */
+
+    Table *table = load_table("Personas.csv");
 
     print_table(table);
-
-    save_table(table);
 
     delete_table(table);
 }

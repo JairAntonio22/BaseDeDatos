@@ -36,7 +36,64 @@ void delete_table(Table *table) {
 }
 
 Table* load_table(char *filename) {
-    return NULL;
+    FILE *file = fopen(filename, "r");
+
+    if (file == NULL) {
+        printf("Error: %s not found\n", filename);
+        exit(0);
+    }
+
+    char *word = (char*) calloc(sizeof(char), 500);
+    int size = 0;
+
+    char ***data = (char***) calloc(sizeof(char**), 500);
+    int ncols = 0;
+    int nrows = 0;
+
+    data[0] = (char**) calloc(sizeof(char*), 500);
+    int ccol = 0;
+
+    for (char c = fgetc(file); c != EOF; c = fgetc(file)) {
+        switch (c) {
+        case ',':
+            word[size] = '\0';
+            data[nrows][ccol] = strdup(word);
+            size = 0;
+            ccol++;
+            break;
+
+        case '\n':
+            word[size] = '\0';
+            data[nrows][ccol] = strdup(word);
+            size = 0;
+            ncols = ccol > ncols ? ccol : ncols;
+            ccol = 0;
+            nrows++;
+            data[nrows] = (char**) calloc(sizeof(char*), 500);
+            break;
+
+        default:
+            word[size] = c;
+            size++;
+        }
+    }
+
+    fclose(file);
+    free(word);
+
+    char *name = strdup(filename);
+    name[strchr(name, '.') - name] = '\0';
+
+    Table *table = create_table(name, ncols, data[0]);
+    free(name);
+
+    for (int i = 1; i < nrows; i++) {
+        insert_table(table, data[i]);
+    }
+
+    free(data);
+
+    return table;
 }
 
 void save_table(Table *table) {

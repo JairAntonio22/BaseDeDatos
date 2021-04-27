@@ -20,4 +20,4 @@ $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(RM) -r $(BIN)/* $(OBJ)/*
+	$(RM) -r $(OBJ)/* $(TARGET)
