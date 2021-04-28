@@ -8,8 +8,7 @@ SRCS=$(wildcard $(SRC)/*.c)
 OBJ=obj
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 
-BIN=bin
-TARGET=$(BIN)/client
+TARGET=client
 
 all:$(TARGET)
 

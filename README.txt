@@ -3,7 +3,6 @@ El repositorio incluye dos directorios principales (client y server), cada
 directorio tiene la misma estructura
 
 /dir
-    /bin/   <-  contiene el ejecutable
     /obj/   <-  contiene los archivos .o para compilación
     /src/   <-  contiene el código fuente del proyecto
 
@@ -26,7 +25,7 @@ seguido por la ruta y el nombre del ejecutable que se encuentra en bin.
 
 *******************************************************************************
 
-Para limpiar los directorios de obj y bin ejecutar el siguiente comando.
+Para limpiar el directorio obj y borrar el ejecutable con el siguiente comando.
 
     make clean
 
