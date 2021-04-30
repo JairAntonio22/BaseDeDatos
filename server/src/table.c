@@ -20,6 +20,16 @@ Table* create_table(char *name, int ncols, char **cols) {
     return table;
 }
 
+Table* dup_table(Table *table) {
+    Table *dup = create_table(table->name, table->cols, table->data[0]);
+
+    for (int i = 1; i < table->rows; i++) {
+        insert_table(dup, table->data[i]);
+    }
+
+    return dup;
+}
+
 void delete_table(Table *table) {
     free(table->name);
 
@@ -47,8 +57,8 @@ Table* load_table(char *filename) {
     int size = 0;
 
     char ***data = (char***) calloc(sizeof(char**), 500);
-    int ncols = 0;
     int nrows = 0;
+    int ncols = 0;
 
     data[0] = (char**) calloc(sizeof(char*), 500);
     int ccol = 0;
@@ -84,11 +94,17 @@ Table* load_table(char *filename) {
     char *name = strdup(filename);
     name[strchr(name, '.') - name] = '\0';
 
-    Table *table = create_table(name, ncols, data[0]);
+    Table *table = create_table(name, ncols + 1, data[0]);
     free(name);
 
     for (int i = 1; i < nrows; i++) {
         insert_table(table, data[i]);
+
+        for (int j = 0; j < ncols; j++) {
+            free(data[i][j]);
+        }
+        
+        free(data[i]);
     }
 
     free(data);

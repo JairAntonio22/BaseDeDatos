@@ -1,28 +1,48 @@
 #include <stdio.h>
 
-#include "table.h"
+#include "db.h"
 
 int main(void) {
-    /*
-    char *cols[] = {"Nombre", "Apellido", "Edad", "Sexo"};
+    if (0) { 
+        DB *db = create_db("MyDB");
 
-    Table *table = create_table("Personas", 4, cols);
+        char *cols[] = {"Nombre", "Edad", "Sexo"};
 
-    char *row1[] = {"Jair", "Antonio", "21", "Hombre"};
-    insert_table(table, row1);
+        add_table(db, "Personas", 3, cols);
 
-    char *row2[] = {"Lorena", "Porcayo", "21", "Mujer"};
-    insert_table(table, row2);
+        {
+            char *row[] = {"Jair", "21", "Hombre"};
+            insert_db(db, "Personas", row);
+        }
 
-    insert_table(table, row1);
+        {
+            char *row[] = {"David", "21", "Hombre"};
+            insert_db(db, "Personas", row);
+        }
 
-    char *row3[] = {"Jorge", "Benitez", "21", "Hombre"};
-    insert_table(table, row3);
-    */
+        {
+            char *row[] = {"Lorena", "21", "Mujer"};
+            insert_db(db, "Personas", row);
+        }
 
-    Table *table = load_table("Personas.csv");
+        {
+            char *row[] = {"Itzel", "20", "Mujer"};
+            insert_db(db, "Personas", row);
+        }
 
-    print_table(table);
+        save_db(db);
+        delete_db(db);
 
-    delete_table(table);
+    } else {
+        DB *db = load_db("MyDB.txt");
+
+        print_table(db->tables[0]);
+
+        char *row[] = {"Eric", "21", "Hombre"};
+        insert_db(db, "Personas", row);
+
+        save_db(db);
+
+        delete_db(db);
+    }
 }

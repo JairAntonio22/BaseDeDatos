@@ -8,6 +8,8 @@ typedef struct Table {
 
 Table* create_table(char *name, int ncols, char **cols);
 
+Table* dup_table(Table *table);
+
 void delete_table(Table *table);
 
 Table* load_table(char *filename);
