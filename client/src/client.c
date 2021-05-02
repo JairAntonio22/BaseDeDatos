@@ -14,10 +14,11 @@
 #define PORT 80
 
 #define OK_INIT 0
+#define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
 #define ERROR_SOCKET_NOT_CREATED 1
 #define ERROR_SERVER_NOT_CONNECTED 2
-#define ERROR_DATA_NOT_SENT 3
+#define ERROR_REQUEST_NOT_SENT 3
 #define ERROR_REPLY_NOT_RECEIVED 4
 
 // #define DEFAULT -1
@@ -31,6 +32,7 @@
 //typedef enum {false, true} bool;
 
 int init();
+int send_request();
 int receive_reply();
 void print_result_table();
 // void close();
@@ -44,8 +46,6 @@ void print_result_table();
 int socket_desc;
 // Server info struct
 struct sockaddr_in server;
-// Message buffer to send data to server
-char* message;
 // Reply buffer to receive data from server
 char server_reply[SERVER_REPLY_SIZE];
 
@@ -57,6 +57,7 @@ char server_reply[SERVER_REPLY_SIZE];
 
 int main(void) 
 {
+    // 1. Init: create socket and connect to server
     switch (init())
     {
     case ERROR_SOCKET_NOT_CREATED:
@@ -72,10 +73,8 @@ int main(void)
         break;
     }
 
-    // 4. Send data
-    message = " GET / HTTP/1.1\r\n\r\n";
-
-    if (send(socket_desc, message, strlen(message), 0) < 0)
+    // 2. Send request to server
+    if (send_request() == ERROR_REQUEST_NOT_SENT)
     {
         printf("Send failed\n");
         return 1;
@@ -83,6 +82,7 @@ int main(void)
 
     printf("Data sent\n");
 
+    // 4. Receive reply from server
     if (receive_reply() == ERROR_REPLY_NOT_RECEIVED)
     {
         printf("Reply not received");
@@ -90,49 +90,14 @@ int main(void)
     }
 
     printf("Reply received\n");
+
+    // 5. Print reply
     print_result_table();
     
+    // 6. Close socket
     close(socket_desc);
+    printf("Socket closed\n");
     return 0;
-
-    // read()
-
-    // write()
-
-    // close()
-
-
-
-    // do
-    // {
-    //     login_status = login(username, password);
-    // } while (login_status == false);
-
-    // printf("Type your query followed by a backspace (%d characters max.)\n", BUFFER_SIZE);
-    // printf("Type q to quit\n");
-
-    // do 
-    // {
-    //     switch (choice)
-    //     {
-    //     case SELECT:
-    //         select();
-    //         break;
-    //     case INSERT:
-    //         insert();
-    //         break;
-    //     case JOIN:
-    //         join();
-    //         break;
-    //     case QUIT:
-    //         break;
-    //     default:
-    //         break;
-    //     }
-    // }
-    // while(choice != QUIT);
-
-    
 }
 
 int init()
@@ -153,15 +118,23 @@ int init()
     return OK_INIT;
 }
 
+int send_request()
+{
+    // Message buffer to send data to server
+    char* message = "GET / HTTP/1.1\r\n\r\n";
+
+    if (send(socket_desc, message, strlen(message), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
+
+    return OK_REQUEST_SENT;
+}
+
 int receive_reply()
 {
     if (recv(socket_desc, server_reply, SERVER_REPLY_SIZE, 0) < 0)
-    {
-        printf("recv failed");
         return ERROR_REPLY_NOT_RECEIVED;
-    }
 
-    printf("Reply received\n");
+    return OK_REPLY_RECEIVED;
 }
 
 void print_result_table()

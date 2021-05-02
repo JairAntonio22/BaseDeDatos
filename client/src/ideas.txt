@@ -20,3 +20,43 @@
     // }
 
     // printf("Connected\n");
+
+
+    // read()
+
+    // write()
+
+    // close()
+
+
+
+    // do
+    // {
+    //     login_status = login(username, password);
+    // } while (login_status == false);
+
+    // printf("Type your query followed by a backspace (%d characters max.)\n", BUFFER_SIZE);
+    // printf("Type q to quit\n");
+
+    // do 
+    // {
+    //     switch (choice)
+    //     {
+    //     case SELECT:
+    //         select();
+    //         break;
+    //     case INSERT:
+    //         insert();
+    //         break;
+    //     case JOIN:
+    //         join();
+    //         break;
+    //     case QUIT:
+    //         break;
+    //     default:
+    //         break;
+    //     }
+    // }
+    // while(choice != QUIT);
+
+    
