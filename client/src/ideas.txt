@@ -1,0 +1,22 @@
+
+    
+    // // 1. Create new socket using IPv4 and TCP/IP
+    // if ((socket_desc = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    // {
+    //     printf("Could not create socket\n");
+    //     return 1;
+    // }
+
+    // // 2. Define server values: address family, address and port
+    // server.sin_family = AF_INET;
+    // server.sin_port = htons(PORT);
+    // server.sin_addr.s_addr = inet_addr(SERVER_IP);
+
+    // // 3. Connect socket to server
+    // if (connect(socket_desc, (struct sockaddr*) &server, sizeof(server)) < 0)
+    // {
+    //     printf("Could not connect to server\n");
+    //     return 1;
+    // }
+
+    // printf("Connected\n");

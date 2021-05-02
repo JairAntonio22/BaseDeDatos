@@ -1,0 +1,82 @@
+ERRORES
+    
+Table does not exist
+    
+    
+
+TODO
+Crear socket
+Conectar socket con servidor
+Validar conexion
+Si la conexion no fue exitosa:
+    Notificar al usuario
+    Terminar programa
+Si la conexion fue exitosa:
+    Continuar
+Solicitar usuario y contrasena hasta que ingrese una credencial valida
+    Validar credencial con servidor
+    Repetir si no es una credencial valida
+Procesar queries hasta que el usuario decida salir
+    Solicitar query y dar instrucciones de formato
+    Leer query
+    Parsear query
+    Validar query
+        Validar que es un statement valido
+        Validar que contiene parametros validos
+    Ejecutar query
+    Recibir resultado
+        Operacion valida
+            Insert: notificacion de insercion exitosa
+            Select: tabla con resultados obtenidos y numero de resultados
+            Join: tabla con resultados obtenidos y numero de resultados
+        Operacion invalida
+            No existe la tabla
+            
+Imprimir resultado
+
+
+
+VALIDACIONES DE SERVIDOR
+El usuario y contrasena existen y coinciden
+La tabla existe
+Las columnas existen
+Tipos de datos coinciden?
+
+
+typedef enum {false, true} bool;
+
+typedef enum {equal, greater_than, less_than, greater_than_equal, less_than_equal, not_equal} operator;
+
+init():
+Iniciar conexion con el servidor
+
+close():
+Terminar conexion con el servidor
+
+parseStatement(char** input);
+
+bool login(char* username, char* password);
+
+bool logout();
+
+SELECT:
+- Select all records from table
+- Select all rows with certain columns
+- Select where: operator
+
+// 2D array of strings
+char*** selectAll(char* table);
+//
+char*** selectWhere(char** columns, operator op, char* table);
+
+INSERT:
+- Column names and values
+- Only values
+insert()
+
+JOIN:
+join()
+
+
+Archivo global - constantes
+PORT
