@@ -14,8 +14,10 @@ Table* load_table(char *filename);
 
 void save_table(Table *table);
 
-int insert_table(Table *table, char **row);
+Table* select_table(Table *table, int ncols, char **cols, char **where);
 
 Table* join_table(Table *table1, Table *table2, char **cols);
+
+int insert_table(Table *table, char **row);
 
 void print_table(Table *tabel);

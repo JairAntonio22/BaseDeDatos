@@ -15,6 +15,10 @@ DB* create_db(char *name) {
 }
 
 void delete_db(DB *db) {
+    if (db == NULL) {
+        return;
+    }
+
     free(db->name);
 
     for (int i = 0; i < db->size; i++) {
@@ -51,6 +55,10 @@ DB* load_db(char *filename) {
 }
 
 void save_db(DB *db) {
+    if (db == NULL) {
+        return;
+    }
+
     char *filename = (char*) calloc(sizeof(char), 50);
     strcpy(filename, db->name);
     strcat(filename, ".txt");
@@ -70,11 +78,25 @@ void save_db(DB *db) {
 }
 
 void add_table(DB *db, char *name, int ncols, char **cols) {
+    if (db == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < db->size; i++) {
+        if (strcmp(name, db->tables[i]->name) == 0) {
+            return;
+        }
+    }
+
     db->tables[db->size] = create_table(name, ncols, cols);
     db->size++;
 }
 
 Table* get_table(DB *db, char *name) {
+    if (db == NULL) {
+        return NULL;
+    }
+
     int index = 0;
 
     while (strcmp(db->tables[index]->name, name) != 0 && index < db->size) {
@@ -84,17 +106,35 @@ Table* get_table(DB *db, char *name) {
     return index == db->size ? NULL : db->tables[index];
 }
 
-int insert_db(DB *db, char *name, char **row) {
+Table* select_db(DB *db, char *name, int ncols, char **cols, char **where) {
+    if (db == NULL) {
+        return NULL;
+    }
+
     Table *table = get_table(db, name);
 
-    return table == NULL ? -1 : insert_table(table, row);
+    return table == NULL ? NULL : select_table(table, ncols, cols, where);
 }
 
 Table* join_db(DB *db, char *name1, char *name2, char **cols) {
+    if (db == NULL) {
+        return NULL;
+    }
+
     Table *table1 = get_table(db, name1);
     Table *table2 = get_table(db, name2);
 
     return table1 == NULL || table2 == NULL
         ? NULL 
         : join_table(table1, table2, cols);
+}
+
+int insert_db(DB *db, char *name, char **row) {
+    if (db == NULL) {
+        return -1;
+    }
+
+    Table *table = get_table(db, name);
+
+    return table == NULL ? -1 : insert_table(table, row);
 }

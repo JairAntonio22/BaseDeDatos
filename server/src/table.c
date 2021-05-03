@@ -4,6 +4,10 @@
 
 #include "table.h"
 
+#define bool int
+#define true 1
+#define false 0
+
 Table* create_table(char *name, int ncols, char **cols) {
     Table *table = (Table*) malloc(sizeof(Table));
 
@@ -127,16 +131,55 @@ void save_table(Table *table) {
     fclose(file);
 }
 
-int insert_table(Table *table, char **row) {
-    table->data[table->rows] = (char**) calloc(sizeof(char*), table->cols);
-
-    for (int i = 0; i < table->cols; i++) {
-        table->data[table->rows][i] = strdup(row[i]);
+Table* select_table(Table *table, int ncols, char **cols, char **where) {
+    if (table == NULL) {
+        return NULL;
     }
 
-    table->rows++;
-    return 1;
+    if (ncols == 0 || where == NULL) {
+        return NULL;
+    }
+
+    bool *mask = (bool*) calloc(sizeof(bool), table->cols);
+    int *map = (int*) calloc(sizeof(bool), table->cols);
+    int windex;
+
+    for (int i = 0; i < table->cols; i++) {
+        for (int j = 0; j < ncols; j++) {
+            if (strcmp(table->data[0][i], cols[j]) == 0) {
+                mask[i] = true;
+                map[i] = j;
+            }
+
+        }
+
+        if (where != NULL && strcmp(table->data[0][i], where[0])) {
+            windex = i;
+        }
+    }
+
+    char ***data = (char***) calloc(sizeof(char**), table->rows);
+    int rows = 1;
+
+    for (int i = 0; i < table->rows; i++) {
+        if (where != NULL && strcmp(table->data[i][windex], where[1]) != 0) {
+            continue;
+        }
+
+        data[i] = (char**) calloc(sizeof(char*), ncols);
+
+        for (int j = 0; j < table->cols; j++) {
+            if (mask[j]) {
+                data[i][map[j]] = strdup(table->data[i][j]);
+            }
+        }
+        
+        rows++;
+    }
+
+    return NULL;
 }
+
 
 Table* join_table(Table *table1, Table *table2, char **cols) {
     if (table1 == NULL || table2 == NULL) {
@@ -228,20 +271,66 @@ Table* join_table(Table *table1, Table *table2, char **cols) {
     return table;
 }
 
+int insert_table(Table *table, char **row) {
+    if (table == NULL) {
+        return -1;
+    }
+
+    table->data[table->rows] = (char**) calloc(sizeof(char*), table->cols);
+
+    for (int i = 0; i < table->cols; i++) {
+        if (row[i] == NULL) {
+            return -1;
+        }
+
+        table->data[table->rows][i] = strdup(row[i]);
+    }
+
+    table->rows++;
+    return 1;
+}
+
 void print_table(Table *table) {
     if (table == NULL) {
         return;
     }
 
-    printf("%s\n", table->name);
+    int **widths = (int**) calloc(sizeof(int*), table->rows);
+    int *maxwidths = (int*) calloc(sizeof(int), table->cols);
 
     for (int i = 0; i < table->rows; i++) {
-        printf("%i\t", i);
+        widths[i] = (int*) calloc(sizeof(int), table->cols);
 
         for (int j = 0; j < table->cols; j++) {
-            printf("%s\t", table->data[i][j]);
+            widths[i][j] = strlen(table->data[i][j]);
+            maxwidths[j] = widths[i][j] > maxwidths[j] 
+                ? widths[i][j] 
+                : maxwidths[j];
+        }
+    }
+
+    printf("Table: %s\n", table->name);
+    int space = 4;
+
+    for (int i = 0; i < table->rows; i++) {
+        printf("%i", i);
+
+        for (int j = 0; j < space; j++) {
+            printf(" ");
+        }
+
+        for (int j = 0; j < table->cols; j++) {
+            printf("%s", table->data[i][j]);
+
+            for (int k = 0; k < maxwidths[j] - widths[i][j] + space; k++) {
+                printf(" ");
+            }
         }
         
         printf("\n");
+        free(widths[i]);
     }
+
+    free(maxwidths);
+    free(widths);
 }
