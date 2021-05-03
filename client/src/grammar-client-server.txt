@@ -1,0 +1,14 @@
+login <username> <password>
+
+insert
+
+select_all
+select_columns <table> <column_1> ... <column_n>
+select_where
+
+join <table_1> <table_2> <column_1> <column_2>
+
+logout
+
+success
+failure

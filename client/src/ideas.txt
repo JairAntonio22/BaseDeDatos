@@ -60,3 +60,53 @@
     // while(choice != QUIT);
 
     
+    printf("Please login to continue\n");
+    printf("Username: ");
+    fgets(username, USERNAME_BUFFER_SIZE, stdin);
+    username[strlen(username) - 1] = '\0';
+    
+    printf("Password: ");
+    fgets(password, PASSWORD_BUFFER_SIZE, stdin);
+    password[strlen(password) - 1] = '\0';
+
+    char* message = malloc(strlen(username) + strlen(password) + 2);
+    strcpy(message, username);
+    strcat(message, ",");
+    strcat(message, password);
+
+    printf("|%s|\n", message);
+    free(message);
+
+    // printf("Username: ");
+    // fgets(username, USERNAME_BUFFER_SIZE, stdin);
+    // username[strlen(username) - 1] = '\0';
+    
+    // printf("Password: ");
+    // fgets(password, PASSWORD_BUFFER_SIZE, stdin);
+    // password[strlen(password) - 1] = '\0';
+
+    // // printf("|%s|\n", username);
+    // // printf("|%s|\n", password);
+
+    
+    
+    // // Message to server that includes username and password separated by a comma
+    // char* message = malloc(strlen(username) + strlen(password) + 2);
+    // strcpy(message, username);
+    // strcat(message, ",");
+    // strcat(message, password);
+
+    // // printf("|%s|\n", message);
+
+    // if (send(socket_desc, message, strlen(message), 0) < 0)
+    //     return ERROR_REQUEST_NOT_SENT;
+
+    // if (recv(socket_desc, login_reply, SERVER_REPLY_SIZE, 0) < 0)
+    //     return ERROR_REPLY_NOT_RECEIVED;
+
+    // if (strcmp(login_reply, "failure") == 0)
+    //     return ERROR_LOGIN_USER_NOT_FOUND;
+    // else if (strcmp(login_reply, "success") == 0)
+    //     return OK_LOGIN;
+
+    // return ERROR_LOGIN_OTHER;
