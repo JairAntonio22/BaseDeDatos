@@ -1,7 +1,5 @@
-Nombre,Edad,Sexo
-Jair,21,Hombre
-David,21,Hombre
-Lorena,21,Mujer
-Itzel,20,Mujer
-Eric,21,Hombre
-Eric,21,Hombre
+Nombre,Edad,Sexo,CursoNombre
+Jair,21,Hombre,Ajedrez
+David,21,Hombre,Python
+Lorena,21,Mujer,Dibujo
+Itzel,20,Mujer,Dibujo
