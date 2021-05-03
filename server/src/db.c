@@ -28,8 +28,7 @@ DB* load_db(char *filename) {
     FILE *file = fopen(filename, "r");
 
     if (file == NULL) {
-        printf("Error: %s not found", filename);
-        exit(0);
+        return NULL;
     }
 
     char *name = strdup(filename);
@@ -75,18 +74,27 @@ void add_table(DB *db, char *name, int ncols, char **cols) {
     db->size++;
 }
 
-int insert_db(DB *db, char *name, char **row) {
+Table* get_table(DB *db, char *name) {
     int index = 0;
 
     while (strcmp(db->tables[index]->name, name) != 0 && index < db->size) {
         index++;
     }
 
-    if (index == db->size) {
-        return -1;
+    return index == db->size ? NULL : db->tables[index];
+}
 
-    } else {
-        insert_table(db->tables[index], row);
-        return 0;
-    }
+int insert_db(DB *db, char *name, char **row) {
+    Table *table = get_table(db, name);
+
+    return table == NULL ? -1 : insert_table(table, row);
+}
+
+Table* join_db(DB *db, char *name1, char *name2, char **cols) {
+    Table *table1 = get_table(db, name1);
+    Table *table2 = get_table(db, name2);
+
+    return table1 == NULL || table2 == NULL
+        ? NULL 
+        : join_table(table1, table2, cols);
 }

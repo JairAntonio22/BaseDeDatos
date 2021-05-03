@@ -20,17 +20,11 @@ Table* create_table(char *name, int ncols, char **cols) {
     return table;
 }
 
-Table* dup_table(Table *table) {
-    Table *dup = create_table(table->name, table->cols, table->data[0]);
-
-    for (int i = 1; i < table->rows; i++) {
-        insert_table(dup, table->data[i]);
+void delete_table(Table *table) {
+    if (table == NULL) {
+        return;
     }
 
-    return dup;
-}
-
-void delete_table(Table *table) {
     free(table->name);
 
     for (int i = 0; i < table->rows; i++) {
@@ -49,8 +43,7 @@ Table* load_table(char *filename) {
     FILE *file = fopen(filename, "r");
 
     if (file == NULL) {
-        printf("Error: %s not found\n", filename);
-        exit(0);
+        return NULL;
     }
 
     char *word = (char*) calloc(sizeof(char), 500);
@@ -100,7 +93,7 @@ Table* load_table(char *filename) {
     for (int i = 1; i < nrows; i++) {
         insert_table(table, data[i]);
 
-        for (int j = 0; j < ncols; j++) {
+        for (int j = 0; j < ncols + 1; j++) {
             free(data[i][j]);
         }
         
@@ -108,11 +101,14 @@ Table* load_table(char *filename) {
     }
 
     free(data);
-
     return table;
 }
 
 void save_table(Table *table) {
+    if (table == NULL) {
+        return;
+    }
+
     char *filename = (char*) calloc(sizeof(char), strlen(table->name) + 5);
     strcpy(filename, table->name);
     strcat(filename, ".csv");
@@ -131,17 +127,112 @@ void save_table(Table *table) {
     fclose(file);
 }
 
-void insert_table(Table *table, char **reg) {
+int insert_table(Table *table, char **row) {
     table->data[table->rows] = (char**) calloc(sizeof(char*), table->cols);
 
     for (int i = 0; i < table->cols; i++) {
-        table->data[table->rows][i] = strdup(reg[i]);
+        table->data[table->rows][i] = strdup(row[i]);
     }
 
     table->rows++;
+    return 1;
+}
+
+Table* join_table(Table *table1, Table *table2, char **cols) {
+    if (table1 == NULL || table2 == NULL) {
+        return NULL;
+    }
+
+    int ncols = table1->cols + table2->cols;
+
+    char ***data = (char***) calloc(sizeof(char**), 500);
+
+    int key1 = -1;
+    int key2 = -1;
+
+    /* Primer renglón */ {
+        data[0] = (char**) calloc(sizeof(char*), ncols);
+
+        int i = 0;
+
+        while (i < table1->cols) {
+            if (strcmp(table1->data[0][i], cols[0]) == 0) {
+                key1 = i;
+            }
+
+            data[0][i] = strdup(table1->data[0][i]);
+            i++;
+        }
+
+        while (i - table1->cols < table2->cols) {
+            if (strcmp(table2->data[0][i - table1->cols], cols[1]) == 0) {
+                key2 = i - table1->cols;
+            }
+            
+            data[0][i] = strdup(table2->data[0][i - table1->cols]);
+            i++;
+        }
+    }
+
+    if (key1 == -1 || key2 == -1) {
+        return NULL;
+    }
+
+    int row = 1;
+
+    for (int i = 1; i < table1->rows; i++) {
+        for (int j = 1; j < table2->rows; j++) {
+            data[row] = (char**) calloc(sizeof(char*), ncols);
+
+            if (strcmp(table1->data[i][key1], table2->data[j][key2]) != 0) {
+                continue;
+            }
+
+            int k = 0;
+
+            while (k < table1->cols) {
+                data[row][k] = strdup(table1->data[i][k]);
+                k++;
+            }
+
+            while (k - table1->cols < table2->cols) {
+                data[row][k] = strdup(table2->data[j][k - table1->cols]);
+                k++;
+            }
+
+            row++;
+        }
+    }
+
+    int name_len = strlen(table1->name) + 3 + strlen(table2->name);
+    char *name = (char*) calloc(sizeof(char), name_len);
+
+    strcpy(name, table1->name);
+    strcat(name, " join ");
+    strcat(name, table2->name);
+
+    Table *table = create_table(name, ncols, data[0]);
+    free(name);
+
+    for (int i = 1; i < row; i++) {
+        insert_table(table, data[i]);
+
+        for (int j = 0; j < ncols; j++) {
+            free(data[i][j]);
+        }
+        
+        free(data[i]);
+    }
+
+    free(data);
+    return table;
 }
 
 void print_table(Table *table) {
+    if (table == NULL) {
+        return;
+    }
+
     printf("%s\n", table->name);
 
     for (int i = 0; i < table->rows; i++) {
