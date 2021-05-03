@@ -110,3 +110,47 @@
     //     return OK_LOGIN;
 
     // return ERROR_LOGIN_OTHER;
+
+
+// // Copy substring until newline
+
+    // // Copy reply to temporary buffer to avoid reference issues after call to strtok()
+    // char* copy = malloc(strlen(reply) + 1);
+    // strcpy(copy, reply);
+
+    // // Initialize token parsing
+    // token = strtok(copy, delim_col);
+    // if (token == NULL)
+    //     printf("NULL\n");
+    // else
+    // {
+    //     printf("%s\t", token);
+    //     printf("Here 2\n");
+    // }
+
+    // // Read subsequent data
+    // while(token != NULL)
+    // {
+    //     token = strtok(NULL, delim_col);
+    //     printf("%s\t", token);
+    // }
+
+    // free(copy);
+
+
+
+    // Initialize token parsing
+    //row = strtok(copy, delim_row);
+    // if ((row = strtok(copy, delim_row)) == NULL)
+    //     printf("NULL\n");
+    // else
+    // {
+    //     printf("|%s|\n", row);
+    // }
+
+    // // Read subsequent data
+    // while((row = strtok(NULL, delim_row)) != NULL)
+    // {
+    //     //row = strtok(NULL, delim_row);
+    //     printf("|%s|\n", row);
+    // }

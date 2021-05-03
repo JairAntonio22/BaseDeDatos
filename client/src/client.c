@@ -23,11 +23,14 @@
 #define OK_LOGIN 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
+#define OK_RESULT_TABLE_PARSED 0
 #define ERROR_SOCKET_NOT_CREATED 1
 #define ERROR_SERVER_NOT_CONNECTED 2
 #define ERROR_REQUEST_NOT_SENT 3
 #define ERROR_REPLY_NOT_RECEIVED 4
 #define ERROR_LOGIN_MAX_TRIES 5
+#define ERROR_RESULT_TABLE_ROW_NOT_PARSED 6
+#define ERROR_RESULT_TABLE_COL_NOT_PARSED 7
 
 // #define DEFAULT -1
 // #define QUIT 0
@@ -42,7 +45,8 @@ typedef enum {false, true} bool;
 int init();
 int send_request();
 int receive_reply();
-void print_result_table();
+void print_reply();
+int print_result_table();
 void finish();
 int login();
 bool logout();
@@ -123,7 +127,21 @@ int main(void)
     printf("Reply received\n");
 
     // 5. Print reply
-    // print_result_table();
+    // print_reply();
+    switch (print_result_table())
+    {
+    case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
+        printf("Rows could not be retreived\n");
+        break;
+    case ERROR_RESULT_TABLE_COL_NOT_PARSED:
+        printf("Columns could not be retreived\n");
+        break;
+    case OK_RESULT_TABLE_PARSED:
+        printf("Table parse successful\n");
+        break;
+    default:
+        break;
+    }
     
     // 6. Close socket
     close(socket_desc);
@@ -168,7 +186,7 @@ int receive_reply()
     return OK_REPLY_RECEIVED;
 }
 
-void print_result_table()
+void print_reply()
 {
     //FILE* fptr;
     //fopen("reply.txt", "w");
@@ -183,6 +201,70 @@ void print_result_table()
     //fclose(fptr);
 }
 
+int print_result_table()
+{
+    // Reply
+    // PRUEBA: asi debe lucir el mensaje de respuesta del servidor
+    char* reply = "1,2,3\n4,5,6\n7,8,9";
+    // Row and column delimiters
+    char* delim_row = "\n";
+    char* delim_col = ",";
+    // Separator for final print
+    char* separator = "\t";
+
+    // Pointers to receive the beginning of each row and column
+    char *row, *col;
+    // Pointers to maintain context between strtok_r() simultaenous calls
+    char *saveptr1, *saveptr2;
+
+    // Copy reply to buffer to avoid reference issues after call to strtok_r()
+    char* copy = malloc(strlen(reply) + 1);
+    strcpy(copy, reply);
+
+    // Parse all rows and all columns per row from message
+    // First call to strok_r for all rows: point to message, next calls will point to NULL
+    row = strtok_r(copy, delim_row, &saveptr1);
+
+    // Error: token not found
+    if (row == NULL)
+        return ERROR_RESULT_TABLE_ROW_NOT_PARSED;
+
+    // First call to strok_r for all cols in current row: point to row, next calls will point to NULL
+    col = strtok_r(row, delim_col, &saveptr2);
+
+    // Error: token not found
+    if (col == NULL)
+        return ERROR_RESULT_TABLE_COL_NOT_PARSED;
+    
+    // Print first col
+    printf("%s%s", col, separator);
+    
+    // Print all remaining cols in current row
+    while ((col = strtok_r(NULL, delim_col, &saveptr2)) != NULL)
+        printf("%s%s", col, separator);
+    printf("\n");
+
+    // Parse remaining rows in message
+    while ((row = strtok_r(NULL, delim_row, &saveptr1)) != NULL)
+    {   
+        col = strtok_r(row, delim_col, &saveptr2);
+        if (col == NULL)
+            return ERROR_RESULT_TABLE_COL_NOT_PARSED;
+
+        // Print first col
+        printf("%s%s", col, separator);
+
+        // Print all remaining cols in current row
+        while ((col = strtok_r(NULL, delim_col, &saveptr2)) != NULL)
+            printf("%s%s", col, separator);
+        printf("\n");
+    }
+
+    free(copy);
+    return OK_RESULT_TABLE_PARSED;
+
+}
+
 void finish()
 {
 
@@ -195,7 +277,7 @@ int login()
     // Buffer to receive reply from server
     // PRUEBA: el valor es asignado para probar funcionalidad correcta
     // Cambiar success o failure segun se quiera
-    char* reply = "failure";
+    char* reply = "success";
 
     printf("Please login to continue\n");
 
