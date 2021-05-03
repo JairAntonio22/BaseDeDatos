@@ -10,16 +10,24 @@
 // PRUEBA: IP de Google
 #define SERVER_IP "142.250.69.14"
 #define SERVER_REPLY_SIZE 2000
+#define SERVER_LOGIN_REPLY_SIZE 8
 // Puerto de HTTP
 #define PORT 80
+// Input buffer size
+#define BUFFER_SIZE 256
+#define USERNAME_BUFFER_SIZE 30
+#define PASSWORD_BUFFER_SIZE 30
+#define LOGIN_MAX_TRIES 3
 
 #define OK_INIT 0
+#define OK_LOGIN 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
 #define ERROR_SOCKET_NOT_CREATED 1
 #define ERROR_SERVER_NOT_CONNECTED 2
 #define ERROR_REQUEST_NOT_SENT 3
 #define ERROR_REPLY_NOT_RECEIVED 4
+#define ERROR_LOGIN_MAX_TRIES 5
 
 // #define DEFAULT -1
 // #define QUIT 0
@@ -29,18 +37,18 @@
 // #define ERROR_NEW_SOCKET -1
 // #define BUFFER_SIZE 1024
 
-//typedef enum {false, true} bool;
+typedef enum {false, true} bool;
 
 int init();
 int send_request();
 int receive_reply();
 void print_result_table();
-// void close();
-// bool login(char* username, char* password);
-// bool logout();
-// void insert();
-// void select();
-// void join();
+void finish();
+int login();
+bool logout();
+void insert_db();
+void select_db();
+void join_db();
 
 // Server socket descriptor
 int socket_desc;
@@ -48,6 +56,11 @@ int socket_desc;
 struct sockaddr_in server;
 // Reply buffer to receive data from server
 char server_reply[SERVER_REPLY_SIZE];
+
+char username[USERNAME_BUFFER_SIZE];
+char password[PASSWORD_BUFFER_SIZE];
+// Input buffer
+char buffer[BUFFER_SIZE];
 
 // int choice = DEFAULT;
 // char** username;
@@ -57,6 +70,24 @@ char server_reply[SERVER_REPLY_SIZE];
 
 int main(void) 
 {
+    // Login
+    switch (login())
+    {
+    case ERROR_REQUEST_NOT_SENT:
+        printf("Could not send request to server\n");
+        break;
+    case ERROR_REPLY_NOT_RECEIVED:
+        printf("Could not receive reply from server\n");
+        break;
+    case ERROR_LOGIN_MAX_TRIES:
+        printf("You have used all attempts. Try again later.\n");
+        break;
+    case OK_LOGIN:
+        printf("Login successful\n");
+    default:
+        break;
+    }
+
     // 1. Init: create socket and connect to server
     switch (init())
     {
@@ -92,7 +123,7 @@ int main(void)
     printf("Reply received\n");
 
     // 5. Print reply
-    print_result_table();
+    // print_result_table();
     
     // 6. Close socket
     close(socket_desc);
@@ -152,22 +183,77 @@ void print_result_table()
     //fclose(fptr);
 }
 
-// bool login(char* username, char* password)
-// {
-//     return true;
-// }
+void finish()
+{
 
-// void insert()
-// {
+}
 
-// }
+int login()
+{
+    // Set max number of login attempts
+    int max_tries = LOGIN_MAX_TRIES;
+    // Buffer to receive reply from server
+    // PRUEBA: el valor es asignado para probar funcionalidad correcta
+    // Cambiar success o failure segun se quiera
+    char* reply = "failure";
 
-// void select()
-// {
+    printf("Please login to continue\n");
 
-// }
+    // Try login for max number of attempts
+    do
+    {
+        // Read username from console
+        printf("Username: ");
+        fgets(username, USERNAME_BUFFER_SIZE, stdin);
+        username[strlen(username) - 1] = '\0';
+        
+        // Read password from console
+        printf("Password: ");
+        fgets(password, PASSWORD_BUFFER_SIZE, stdin);
+        password[strlen(password) - 1] = '\0';
 
-// void join()
-// {
+        // Join username and password in a comma-separated message to send to server
+        char* message = malloc(strlen(username) + strlen(password) + 2);
+        strcpy(message, username);
+        strcat(message, ",");
+        strcat(message, password);
 
-// }
+        // PRUEBA: verificar que el mensaje este correctamente formateado
+        printf("|%s|\n", message);
+
+        // Send request to server
+        // if (send(socket_desc, message, strlen(message), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, SERVER_REPLY_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // Check if login was successful
+        if (strcmp(reply, "success") == 0)
+            return OK_LOGIN; // Success
+        
+        // Failure: try again
+        printf("\nUser and password do not match. Try again.\n");
+        free(message);
+        max_tries--;
+    } while (max_tries > 0);
+    
+    // User exceeded max number of attempts
+    return ERROR_LOGIN_MAX_TRIES;
+}
+
+void insert_db()
+{
+
+}
+
+void select_db()
+{
+
+}
+
+void join_db()
+{
+
+}
