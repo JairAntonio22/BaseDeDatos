@@ -60,8 +60,9 @@ int main(void) {
         print_table(db->tables[0]);
         print_table(db->tables[1]);
 
-        char *cols[] = {"CursoNombre", "Nombre"};
-        Table *table = join_db(db, "Personas", "Cursos", cols);
+        char *cols[] = {"Nombre"};
+        char *where[] = {"Sexo", "Hombre"};
+        Table *table = select_db(db, "Personas", 1, cols, where);
         print_table(table);
         delete_table(table);
 

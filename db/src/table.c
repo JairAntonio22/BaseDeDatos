@@ -21,6 +21,22 @@ Table* create_table(char *name, int ncols, char **cols) {
         table->data[0][i] = strdup(cols[i]);
     }
 
+    for (int i = 0; i < ncols - 1; i++) {
+        char count = '0';
+
+        for (int j = i + 1; j < ncols; j++) {
+            if (strcmp(table->data[0][i], table->data[0][j]) != 0) {
+                continue;
+            }
+
+            int len = strlen(table->data[0][j]);
+            table->data[0][j] = (char*) realloc(table->data[0][j], len + 2);
+            table->data[0][j][len] = count;
+            table->data[0][j][len + 1] = '\0';
+            count++;
+        }
+    }
+
     return table;
 }
 
@@ -136,13 +152,13 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
         return NULL;
     }
 
-    if (ncols == 0 || where == NULL) {
+    if (ncols <= 0 || where == NULL) {
         return NULL;
     }
 
     bool *mask = (bool*) calloc(sizeof(bool), table->cols);
     int *map = (int*) calloc(sizeof(bool), table->cols);
-    int windex;
+    int w_id;
 
     for (int i = 0; i < table->cols; i++) {
         for (int j = 0; j < ncols; j++) {
@@ -153,16 +169,16 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
 
         }
 
-        if (where != NULL && strcmp(table->data[0][i], where[0])) {
-            windex = i;
+        if (where != NULL && strcmp(table->data[0][i], where[0]) == 0) {
+            w_id = i;
         }
     }
 
     char ***data = (char***) calloc(sizeof(char**), table->rows);
     int rows = 1;
 
-    for (int i = 0; i < table->rows; i++) {
-        if (where != NULL && strcmp(table->data[i][windex], where[1]) != 0) {
+    for (int i = 1; i < table->rows; i++) {
+        if (where != NULL && strcmp(table->data[i][w_id], where[1]) != 0) {
             continue;
         }
 
@@ -170,14 +186,32 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
 
         for (int j = 0; j < table->cols; j++) {
             if (mask[j]) {
-                data[i][map[j]] = strdup(table->data[i][j]);
+                data[rows][map[j]] = strdup(table->data[i][j]);
             }
         }
         
         rows++;
     }
 
-    return NULL;
+    char *name = (char*) calloc(sizeof(char), strlen(table->name) + 10);
+    strcpy(name, table->name);
+    strcat(name, " selected");
+
+    Table *result = create_table(name, ncols, cols);
+
+    for (int i = 1; i < rows; i++) {
+        insert_table(result, data[i]);
+
+        for (int j = 0; j < ncols; j++) {
+            free(data[i][j]);
+        }
+
+        free(data[i]);
+    }
+
+    free(data);
+
+    return result;
 }
 
 
