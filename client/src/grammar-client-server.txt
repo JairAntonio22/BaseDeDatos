@@ -1,14 +1,37 @@
-login <username> <password>
+Hacer enums de comunicacion server-db
 
-insert
+// Buffer de request para login
+#define REQUEST_LOGIN_BUFFER 41
+// Buffer de respuesta para login
+#define REPLY_LOGIN_BUFFER 8
+// Buffer de request para insert, select, join
+#define REQUEST_BUFFER 251
+// Buffer de respuesta para insert, select, join
+#define REPLY_BUFFER 2001
 
-select_all
-select_columns <table> <column_1> ... <column_n>
-select_where
+LOGIN
+login,<username>,<password>
+    -> Definir respuesta de server
 
-join <table_1> <table_2> <column_1> <column_2>
-
+LOGOUT
 logout
+    -> Definir respuesta de server
 
-success
-failure
+INSERT
+insert,<table>,<value>, ... ,<value>
+    -> Definir respuesta de server
+
+SELECT
+// Selecciona todas las columnas de todos los registros de la tabla
+select_all,<tabla>
+// Selecciona todas las columnas de los registros que cumplan con el where
+select_all_where<tabla>,<key>,>value>
+// Selecciona solo las columnas especificadas de todos los registros
+select_all_cols,<table>,<col>, ... ,<col>
+// Selecciona las columnas especificadas de los registros que cumplan con el where
+select_where,<tabla>,<key>,<value>,<col>, ... , <col>
+    "1,2,3\n4,5,6,7\n" 
+
+JOIN
+join,<table_1>,<table_2>,<col_1>,<col_2>
+    -> Definir respuesta de server

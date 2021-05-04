@@ -9,6 +9,9 @@
 #include <unistd.h>
 // PRUEBA: IP de Google
 #define SERVER_IP "127.0.0.1"
+#define REQUEST_LOGIN 41
+#define REQUEST_SIZE 251
+#define REPLY_SIZE 2001
 #define SERVER_REPLY_SIZE 2000
 #define SERVER_LOGIN_REPLY_SIZE 8
 // Puerto de HTTP
