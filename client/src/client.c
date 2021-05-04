@@ -8,11 +8,11 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 // PRUEBA: IP de Google
-#define SERVER_IP "142.250.69.14"
+#define SERVER_IP "127.0.0.1"
 #define SERVER_REPLY_SIZE 2000
 #define SERVER_LOGIN_REPLY_SIZE 8
 // Puerto de HTTP
-#define PORT 80
+#define PORT 3000
 // Input buffer size
 #define BUFFER_SIZE 256
 #define USERNAME_BUFFER_SIZE 30
