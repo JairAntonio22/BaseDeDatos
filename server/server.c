@@ -1,10 +1,13 @@
+//#include "../db/src/main.c"
 #include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #define MAX 80
 #define PORT 3000
 #define SA struct sockaddr
@@ -21,7 +24,38 @@ void func(int sockfd)
 		// read the message from client and copy it in buffer
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
-		printf("From client: %s\t To client : ", buff);
+		printf("From client: %s\n", buff);
+		char dataB[sizeof(buff)] = "";
+		char cadenaQuery[sizeof(buff)];
+		char cadenaDB[sizeof(buff)];
+		int esComa = 0, sizeQuery = 1;
+		for(int i = 0; i < sizeof(buff); i++){
+			if(buff[i] == ','){
+				esComa++;
+			}
+			if(esComa == 0){
+				cadenaQuery[i] = buff[i];
+				printf("Cadena[%i]= %c\n", i, cadenaQuery[i]);
+				sizeQuery++;
+			}
+			if(esComa == 1 && buff[i] != ','){
+				cadenaDB[i] = buff[i];
+				printf("CadenaDB[%i]= %c\n", i, cadenaDB[i]);
+			}
+			if(buff[i+1] == NULL){
+				i = sizeof(buff);
+			}
+		}
+		//cadena[sizeof(buff)+1] = '\0';
+		char query[sizeQuery];
+		strcat(query, cadenaQuery);
+		strcat(dataB, cadenaDB);
+		if(query == "select_all"){
+			printf("SIIIIIIII");
+		}
+		printf("Query = %s\n", query);
+		printf("Tabla = %s\n", dataB);
+		printf("To client : ");
 		bzero(buff, MAX);
 		n = 0;
 		// copy server message in the buffer

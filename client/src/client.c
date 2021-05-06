@@ -173,7 +173,7 @@ int init()
 int send_request()
 {
     // Message buffer to send data to server
-    char* message = "GET / HTTP/1.1\r\n\r\n";
+    char* message = "select_all,MyDB";
 
     if (send(socket_desc, message, strlen(message), 0) < 0)
         return ERROR_REQUEST_NOT_SENT;
