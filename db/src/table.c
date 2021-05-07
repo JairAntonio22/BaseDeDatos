@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "errorMsg.h"
 #include "table.h"
 
 #define bool int
@@ -18,6 +19,10 @@ Table* create_table(char *name, int ncols, char **cols) {
     table->data[0] = (char**) calloc(sizeof(char*), ncols);
 
     for (int i = 0; i < ncols; i++) {
+        if (cols[i] == NULL) {
+            return NULL;
+        }
+
         table->data[0][i] = strdup(cols[i]);
     }
 
@@ -40,9 +45,9 @@ Table* create_table(char *name, int ncols, char **cols) {
     return table;
 }
 
-void delete_table(Table *table) {
+Error delete_table(Table *table) {
     if (table == NULL) {
-        return;
+        return NullPtrError;
     }
 
     free(table->name);
@@ -57,6 +62,8 @@ void delete_table(Table *table) {
     
     free(table->data);
     free(table);
+
+    return SuccessOperation;
 }
 
 Table* load_table(char *filename) {
@@ -124,9 +131,9 @@ Table* load_table(char *filename) {
     return table;
 }
 
-void save_table(Table *table) {
+Error save_table(Table *table) {
     if (table == NULL) {
-        return;
+        return NullPtrError;
     }
 
     char *filename = (char*) calloc(sizeof(char), strlen(table->name) + 5);
@@ -145,6 +152,8 @@ void save_table(Table *table) {
 
     free(filename);
     fclose(file);
+
+    return SuccessOperation;
 }
 
 Table* select_table(Table *table, int ncols, char **cols, char **where) {
@@ -152,7 +161,7 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
         return NULL;
     }
 
-    if (ncols <= 0 || where == NULL) {
+    if (ncols <= 0 && where == NULL) {
         return NULL;
     }
 
@@ -305,23 +314,24 @@ Table* join_table(Table *table1, Table *table2, char **cols) {
     return table;
 }
 
-int insert_table(Table *table, char **row) {
+Error insert_table(Table *table, char **row) {
     if (table == NULL) {
-        return -1;
+        return NullPtrError;
     }
 
     table->data[table->rows] = (char**) calloc(sizeof(char*), table->cols);
 
     for (int i = 0; i < table->cols; i++) {
         if (row[i] == NULL) {
-            return -1;
+            return MissingColums;
         }
 
         table->data[table->rows][i] = strdup(row[i]);
     }
 
     table->rows++;
-    return 1;
+
+    return SuccessOperation;
 }
 
 void print_table(Table *table) {

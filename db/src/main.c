@@ -66,6 +66,11 @@ int main(void) {
         print_table(table);
         delete_table(table);
 
+        char *cols1[] = {"CursoNombre", "Nombre"};
+        Table *table1 = join_db(db, "Personas", "Cursos", cols1);
+        
+        print_table(table1);
+
         save_db(db);
         delete_db(db);
     }

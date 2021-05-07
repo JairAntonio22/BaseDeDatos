@@ -14,9 +14,9 @@ DB* create_db(char *name) {
     return db;
 }
 
-void delete_db(DB *db) {
+Error delete_db(DB *db) {
     if (db == NULL) {
-        return;
+        return NullPtrError;
     }
 
     free(db->name);
@@ -26,6 +26,8 @@ void delete_db(DB *db) {
     }
 
     free(db->tables);
+
+    return SuccessOperation;
 }
 
 DB* load_db(char *filename) {
@@ -46,7 +48,7 @@ DB* load_db(char *filename) {
     while (!feof(file)) {
         fscanf(file, "%s\n", tablename);
         db->tables[db->size] = load_table(tablename);
-        db->size++;
+        db->size += db->tables[db->size] == NULL ? 0 : 1;
     }
 
     free(tablename);
@@ -54,9 +56,9 @@ DB* load_db(char *filename) {
     return db;
 }
 
-void save_db(DB *db) {
+Error save_db(DB *db) {
     if (db == NULL) {
-        return;
+        return NullPtrError;
     }
 
     char *filename = (char*) calloc(sizeof(char), 50);
@@ -75,21 +77,25 @@ void save_db(DB *db) {
 
     fclose(file);
     free(filename);
+    
+    return SuccessOperation;
 }
 
-void add_table(DB *db, char *name, int ncols, char **cols) {
+Error add_table(DB *db, char *name, int ncols, char **cols) {
     if (db == NULL) {
-        return;
+        return NullPtrError;
     }
 
     for (int i = 0; i < db->size; i++) {
         if (strcmp(name, db->tables[i]->name) == 0) {
-            return;
+            return TableCollision;
         }
     }
 
     db->tables[db->size] = create_table(name, ncols, cols);
     db->size++;
+
+    return SuccessOperation;
 }
 
 Table* get_table(DB *db, char *name) {
@@ -129,12 +135,12 @@ Table* join_db(DB *db, char *name1, char *name2, char **cols) {
         : join_table(table1, table2, cols);
 }
 
-int insert_db(DB *db, char *name, char **row) {
+Error insert_db(DB *db, char *name, char **row) {
     if (db == NULL) {
-        return -1;
+        return NullPtrError;
     }
 
     Table *table = get_table(db, name);
 
-    return table == NULL ? -1 : insert_table(table, row);
+    return table == NULL ? TableNotFound : insert_table(table, row);
 }
