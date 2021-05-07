@@ -38,6 +38,14 @@ Table* join_table(Table *table1, Table *table2, char **cols);
 // Regresa SuccessOperation si la operación es exitosa
 Error insert_table(Table *table, char **row);
 
+// Regresa NULL si la tabla que se manó es nula
+char* encode_table(Table *table);
+
+// Regresa NULL
+//      Si el mensaje que se mandó es nulo
+//      Si el mensaje que se mandó no se puede decodificar
+Table* decode_table(char *msg);
+
 void print_table(Table *tabel);
 
 #endif

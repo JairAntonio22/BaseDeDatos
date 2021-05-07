@@ -68,8 +68,10 @@ int main(void) {
 
         char *cols1[] = {"CursoNombre", "Nombre"};
         Table *table1 = join_db(db, "Personas", "Cursos", cols1);
-        
+
         print_table(table1);
+
+        printf("%s\n", encode_table(table1));
 
         save_db(db);
         delete_db(db);
