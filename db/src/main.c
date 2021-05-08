@@ -71,7 +71,7 @@ int main(void) {
 
         print_table(table1);
 
-        printf("%s\n", encode_table(table1));
+        printf("%s\n", encode_table(db->tables[0]));
 
         save_db(db);
         delete_db(db);

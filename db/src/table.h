@@ -41,11 +41,6 @@ Error insert_table(Table *table, char **row);
 // Regresa NULL si la tabla que se manó es nula
 char* encode_table(Table *table);
 
-// Regresa NULL
-//      Si el mensaje que se mandó es nulo
-//      Si el mensaje que se mandó no se puede decodificar
-Table* decode_table(char *msg);
-
 void print_table(Table *tabel);
 
 #endif

@@ -342,7 +342,7 @@ char* encode_table(Table *table) {
     char *msg = (char*) calloc(sizeof(char), 2000);
     char *buffer = (char*) calloc(sizeof(char), 100);
     char separator[1] = ",";
-    char eof[1] = ";";
+    char eof[1] = "\0";
 
     strcat(msg, table->name);
     strcat(msg, separator);
@@ -373,10 +373,6 @@ char* encode_table(Table *table) {
     strcat(msg, eof);
 
     return msg;
-}
-
-Table* decode_table(char *msg) {
-    return NULL;
 }
 
 void print_table(Table *table) {
