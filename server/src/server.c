@@ -1,10 +1,14 @@
+#include "db.h"
+//#include "../db/src/table.h"
 #include <stdio.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #define MAX 80
 #define PORT 3000
 #define SA struct sockaddr
@@ -21,7 +25,45 @@ void func(int sockfd)
 		// read the message from client and copy it in buffer
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
-		printf("From client: %s\t To client : ", buff);
+		printf("From client: %s\n", buff);
+		char cadenaQuery[sizeof(buff)];
+		char cadenaTabla[sizeof(buff)];
+		int esComa = 0, sizeQuery = 0, sizeTabla = 0;
+		for(int i = 0; i < sizeof(buff); i++){
+			if(buff[i] == ','){
+				esComa++;
+			}
+			if(esComa == 0){
+				cadenaQuery[i] = buff[i];
+				sizeQuery++;
+			}
+			if(esComa == 1 && buff[i] != ','){
+				cadenaTabla[sizeTabla] = buff[i];
+				sizeTabla++;
+			}
+			if(buff[i+1] == NULL){
+				i = sizeof(buff);
+			}
+		}
+		char* query = malloc(sizeQuery-1);
+		char* tabla = malloc(sizeTabla);
+		strcat(query, cadenaQuery);
+		strcat(tabla, cadenaTabla);
+		printf("Query = %s\n", query, sizeQuery);
+		printf("Tabla = %s\n", tabla);
+		
+		DB *db = load_db("MyDB.txt");
+		char *cols[] = {"Nombre"};
+        char *where[] = {"Sexo", "Hombre"};
+        Table *table = select_db(db, "Personas", 1, cols, where);
+        print_table(table);
+		
+		if(query == "select_all"){
+			printf("SIIIIIIII");
+		}else{
+			printf("NOOOO");
+		}
+		printf("To client : ");
 		bzero(buff, MAX);
 		n = 0;
 		// copy server message in the buffer
