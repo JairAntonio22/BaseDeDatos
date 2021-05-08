@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,23 +8,32 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-// PRUEBA: IP de Google
+
+// Server IP
 #define SERVER_IP "127.0.0.1"
-#define REQUEST_LOGIN 41
-#define REQUEST_SIZE 251
-#define REPLY_SIZE 2001
-#define SERVER_REPLY_SIZE 2000
-#define SERVER_LOGIN_REPLY_SIZE 8
-// Puerto de HTTP
+#define SERVER_LOGIN_REPLY_BUFFER_SIZE 8
+// HTTP port
 #define PORT 3000
-// Input buffer size
-#define BUFFER_SIZE 256
-#define USERNAME_BUFFER_SIZE 30
-#define PASSWORD_BUFFER_SIZE 30
+
+// Buffer sizes
+#define INPUT_BUFFER_SIZE 256
+// Username buffer size
+#define USERNAME_BUFFER_SIZE 26
+// Password buffer size
+#define PASSWORD_BUFFER_SIZE 26
+// Request size
+#define REQUEST_BUFFER_SIZE 513
+// Server reply size
+#define REPLY_BUFFER_SIZE 2001
+// Statement buffer size
+#define STATEMENT_BUFFER_SIZE 550
+
 #define LOGIN_MAX_TRIES 3
 
 #define OK_INIT 0
 #define OK_LOGIN 0
+#define OK_LOGOUT 0
+#define OK_INSERT 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
 #define OK_RESULT_TABLE_PARSED 0
@@ -32,8 +42,9 @@
 #define ERROR_REQUEST_NOT_SENT 3
 #define ERROR_REPLY_NOT_RECEIVED 4
 #define ERROR_LOGIN_MAX_TRIES 5
-#define ERROR_RESULT_TABLE_ROW_NOT_PARSED 6
-#define ERROR_RESULT_TABLE_COL_NOT_PARSED 7
+#define ERROR_LOGOUT 6
+#define ERROR_RESULT_TABLE_ROW_NOT_PARSED 7
+#define ERROR_RESULT_TABLE_COL_NOT_PARSED 8
 
 // #define DEFAULT -1
 // #define QUIT 0
@@ -52,7 +63,7 @@ void print_reply();
 int print_result_table();
 void finish();
 int login();
-bool logout();
+int logout();
 void insert_db();
 void select_db();
 void join_db();
@@ -61,23 +72,45 @@ void join_db();
 int socket_desc;
 // Server info struct
 struct sockaddr_in server;
-// Reply buffer to receive data from server
-char server_reply[SERVER_REPLY_SIZE];
-
+// Username
 char username[USERNAME_BUFFER_SIZE];
+// Password
 char password[PASSWORD_BUFFER_SIZE];
 // Input buffer
-char buffer[BUFFER_SIZE];
+char input_buffer[INPUT_BUFFER_SIZE];
+// Reply buffer to receive data from server
+char reply_buffer[REPLY_BUFFER_SIZE];
+// Request buffer to send data to server
+char request_buffer[REQUEST_BUFFER_SIZE];
+// Buffer to confirm user statement
+char statement[STATEMENT_BUFFER_SIZE];
+// Global flag to check connection status
+bool connected = false;
 
 // int choice = DEFAULT;
-// char** username;
-// char** password;
-// char** buffer;
 // bool login_status;
 
 int main(void) 
 {
-    // Login
+    // 1. Init: create socket and connect to server
+    switch (init())
+    {
+    case OK_INIT:
+        printf("Connected\n");
+        break;
+    case ERROR_SOCKET_NOT_CREATED:
+        printf("Could not create socket\n");
+        return 1;
+        break;
+    case ERROR_SERVER_NOT_CONNECTED:
+        printf("Could not connect to server\n");
+        //return 1;
+        break;
+    default:
+        break;
+    }
+
+    // 2. Login
     switch (login())
     {
     case ERROR_REQUEST_NOT_SENT:
@@ -95,21 +128,7 @@ int main(void)
         break;
     }
 
-    // 1. Init: create socket and connect to server
-    switch (init())
-    {
-    case ERROR_SOCKET_NOT_CREATED:
-        printf("Could not create socket\n");
-        return 1;
-        break;
-    case ERROR_SERVER_NOT_CONNECTED:
-        printf("Could not connect to server\n");
-        return 1;
-        break;
-    default:
-        printf("Connected\n");
-        break;
-    }
+    insert_db();
 
     // 2. Send request to server
     if (send_request() == ERROR_REQUEST_NOT_SENT)
@@ -145,6 +164,19 @@ int main(void)
     default:
         break;
     }
+
+    // 6. Logout
+    switch (logout())
+    {
+    case OK_LOGOUT:
+        printf("Login was succesful\n");
+        break;
+    case ERROR_LOGOUT:
+        printf("Could not logout, try again later\n");
+        break;
+    default:
+        break;
+    }
     
     // 6. Close socket
     close(socket_desc);
@@ -167,11 +199,16 @@ int init()
     if (connect(socket_desc, (struct sockaddr*) &server, sizeof(server)) < 0)
         return ERROR_SERVER_NOT_CONNECTED;
 
+    // 4. Connection successful
+    connected = true;
     return OK_INIT;
 }
 
 int send_request()
 {
+    if (connected == false)
+        return ERROR_SERVER_NOT_CONNECTED;
+
     // Message buffer to send data to server
     char* message = "GET / HTTP/1.1\r\n\r\n";
 
@@ -183,7 +220,10 @@ int send_request()
 
 int receive_reply()
 {
-    if (recv(socket_desc, server_reply, SERVER_REPLY_SIZE, 0) < 0)
+    if (connected == false)
+        return ERROR_SERVER_NOT_CONNECTED;
+
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
         return ERROR_REPLY_NOT_RECEIVED;
 
     return OK_REPLY_RECEIVED;
@@ -194,10 +234,10 @@ void print_reply()
     //FILE* fptr;
     //fopen("reply.txt", "w");
 
-    for (int i = 0; i < SERVER_REPLY_SIZE; i++)
+    for (int i = 0; i < REPLY_BUFFER_SIZE; i++)
     {
-        //fprintf(fptr, "%c", server_reply[i]);
-        printf("%c", server_reply[i]);
+        //fprintf(fptr, "%c", reply_buffer[i]);
+        printf("%c", reply_buffer[i]);
     }
         
     printf("\n");
@@ -206,6 +246,9 @@ void print_reply()
 
 int print_result_table()
 {
+    //if (connected == false)
+      //  return ERROR_SERVER_NOT_CONNECTED;
+
     // Reply
     // PRUEBA: asi debe lucir el mensaje de respuesta del servidor
     char* reply = "1,2,3\n4,5,6\n7,8,9";
@@ -290,28 +333,31 @@ int login()
         // Read username from console
         printf("Username: ");
         fgets(username, USERNAME_BUFFER_SIZE, stdin);
+        // Replace newline with termination character
         username[strlen(username) - 1] = '\0';
         
         // Read password from console
         printf("Password: ");
         fgets(password, PASSWORD_BUFFER_SIZE, stdin);
+        // Replace newline with termination character
         password[strlen(password) - 1] = '\0';
 
-        // Join username and password in a comma-separated message to send to server
-        char* message = malloc(strlen(username) + strlen(password) + 2);
-        strcpy(message, username);
-        strcat(message, ",");
-        strcat(message, password);
+        // Join username and password in a comma-separated request to send to server
+        char* request = malloc(strlen("login") + strlen(username) + strlen(password) + 3);
+        strcpy(request, "login,");
+        strcat(request, username);
+        strcat(request, ",");
+        strcat(request, password);
 
         // PRUEBA: verificar que el mensaje este correctamente formateado
-        printf("|%s|\n", message);
+        printf("|%s|\n", request);
 
         // Send request to server
-        // if (send(socket_desc, message, strlen(message), 0) < 0)
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
 
         // Receive reply from server
-        // if (recv(socket_desc, reply, SERVER_REPLY_SIZE, 0) < 0)
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
         // Check if login was successful
@@ -320,7 +366,7 @@ int login()
         
         // Failure: try again
         printf("\nUser and password do not match. Try again.\n");
-        free(message);
+        free(request);
         max_tries--;
     } while (max_tries > 0);
     
@@ -328,9 +374,107 @@ int login()
     return ERROR_LOGIN_MAX_TRIES;
 }
 
+int logout()
+{
+    // PRUEBA: el valor es asignado para probar funcionalidad correcta
+    // Cambiar success o failure segun se quiera
+    char* reply = "success";
+
+    // Request to send to server
+    char* request = "logout";
+
+    // PRUEBA: verificar que el mensaje este correctamente formateado
+    printf("|%s|\n", request);
+
+    // Send request to server
+    // if (send(socket_desc, request, strlen(request), 0) < 0)
+    //     return ERROR_REQUEST_NOT_SENT;
+
+    // Receive reply from server
+    // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+    //     return ERROR_REPLY_NOT_RECEIVED;
+
+    // Logout is successful
+    if (strcmp(reply, "success") == 0)
+        return OK_LOGOUT;
+    
+    // Logout not successful
+    return ERROR_LOGOUT;
+}
+
 void insert_db()
 {
+    // Read insert statement until user confirms their input
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "insert,");
+        strcpy(statement, "INSERT INTO ");
 
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        // Append table name to request
+        strcat(statement, input_buffer);
+        strcat(request_buffer, input_buffer);
+
+        strcat(statement, " VALUES(");
+
+        // Read values until user enters empty line
+        printf("Enter values one per line (enter empty line to finish):\n");
+
+        do
+        {
+            fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+            // Replace newline at the end with termination character
+            input_buffer[strlen(input_buffer) - 1] = '\0';
+
+            // Append non-empty values to request
+            if (input_buffer[0] != '\0')
+            {
+                strcat(request_buffer, ",");
+                strcat(request_buffer, input_buffer);
+                strcat(statement, input_buffer);
+                strcat(statement, ", ");
+            }
+            
+        } while (input_buffer[0] != '\0');
+        
+        // Final statement formating
+        statement[strlen(statement) - 2] = ')';
+        statement[strlen(statement) - 1] = ';';
+
+        printf("%s\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+    } while (tolower(input_buffer[0]) != 'y');
+
+    // Statement confirmed
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // Check if login was successful
+        //if (strcmp(reply, "success") == 0)
+            // return OK_LOGIN; // Success
+
+    return OK_INSERT;
 }
 
 void select_db()
