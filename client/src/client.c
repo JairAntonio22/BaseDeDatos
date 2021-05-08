@@ -34,6 +34,7 @@
 #define OK_LOGIN 0
 #define OK_LOGOUT 0
 #define OK_INSERT 0
+#define OK_JOIN 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
 #define OK_RESULT_TABLE_PARSED 0
@@ -64,9 +65,9 @@ int print_result_table();
 void finish();
 int login();
 int logout();
-void insert_db();
+int insert_db();
 void select_db();
-void join_db();
+int join_db();
 
 // Server socket descriptor
 int socket_desc;
@@ -128,7 +129,8 @@ int main(void)
         break;
     }
 
-    insert_db();
+    //insert_db();
+    join_db();
 
     // 2. Send request to server
     if (send_request() == ERROR_REQUEST_NOT_SENT)
@@ -402,7 +404,7 @@ int logout()
     return ERROR_LOGOUT;
 }
 
-void insert_db()
+int insert_db()
 {
     // Read insert statement until user confirms their input
     do
@@ -482,7 +484,110 @@ void select_db()
 
 }
 
-void join_db()
+int join_db()
 {
+    char* table1;
+    char* table2;
 
+    // Read join statement until user confirms their input
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "join,");
+        strcpy(statement, "SELECT * FROM ");
+
+        // Read table 1 name
+        printf("Enter table 1 name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        // Append table 1 name to request
+        strcat(statement, input_buffer);
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        // Store table 1 name for later use
+        table1 = malloc(strlen(input_buffer));
+        strcpy(table1, input_buffer);
+
+        // Read table 2 name
+        printf("Enter table 2 name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        strcat(statement, " JOIN ");
+
+        // Append table 2 name to request
+        strcat(statement, input_buffer);
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        // Store table 2 name for later use
+        table2 = malloc(strlen(input_buffer));
+        strcpy(table2, input_buffer);
+
+        // Read link column 1
+        printf("Enter link column from table 1: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, " ON ");
+        strcat(statement, table1);
+        strcat(statement, ".");
+
+        // Append link column 1 to request
+        strcat(statement, input_buffer);
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        strcat(statement, " = ");
+
+        // Read link column 2
+        printf("Enter link column from table 2: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, table2);
+        strcat(statement, ".");
+
+        // Append link column 1 to request
+        strcat(statement, input_buffer);
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        strcat(statement, ";");
+
+        // PRUEBA
+        printf("|%s|\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        free(table1);
+        free(table2);
+    } while (tolower(input_buffer[0]) != 'y');
+
+    // Statement confirmed
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // Check if login was successful
+        //if (strcmp(reply, "success") == 0)
+            // return OK_LOGIN; // Success
+
+    return OK_JOIN;
 }

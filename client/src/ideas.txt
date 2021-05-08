@@ -154,3 +154,26 @@
     //     //row = strtok(NULL, delim_row);
     //     printf("|%s|\n", row);
     // }
+
+
+
+    do
+        {
+            fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+            // Replace newline at the end with termination character
+            input_buffer[strlen(input_buffer) - 1] = '\0';
+
+            // Append non-empty values to request
+            if (input_buffer[0] != '\0')
+            {
+                strcat(request_buffer, ",");
+                strcat(request_buffer, input_buffer);
+                strcat(statement, input_buffer);
+                strcat(statement, ", ");
+            }
+            
+        } while (input_buffer[0] != '\0');
+        
+        // Final statement formating
+        statement[strlen(statement) - 2] = ')';
+        statement[strlen(statement) - 1] = ';';
