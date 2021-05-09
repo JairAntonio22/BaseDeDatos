@@ -28,7 +28,7 @@ Error save_db(DB *db);
 Error add_table(DB *db, char *name, int ncols, char **cols);
 
 typedef enum Mode {
-    select_all,
+    select_all = 1,
     select_where,
     select_cols,
     select_cols_where
