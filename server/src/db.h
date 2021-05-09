@@ -27,11 +27,18 @@ Error save_db(DB *db);
 // Regresa TableCollision si existe ya una tabla usando el nombre
 Error add_table(DB *db, char *name, int ncols, char **cols);
 
+typedef enum Mode {
+    select_all,
+    select_where,
+    select_cols,
+    select_cols_where
+} Mode;
+
 // Regresa NULL
 //      Si la db que se mandó es nula
 //      Si la tabla no existe en la db
 //      Si where es nulo y ncols es menor o igual a 0
-Table* select_db(DB *db, char *name, int ncols, char **cols, char **where);
+Table* select_db(DB *db, char *name, int ncols, char **cols, char **where, Mode mode);
 
 // Regresa NULL
 //      Si alguna de las dos tablas no existe
