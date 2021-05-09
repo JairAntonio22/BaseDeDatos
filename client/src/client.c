@@ -48,13 +48,12 @@
 #define ERROR_RESULT_TABLE_ROW_NOT_PARSED 7
 #define ERROR_RESULT_TABLE_COL_NOT_PARSED 8
 
-// #define DEFAULT -1
-// #define QUIT 0
-// #define SELECT 1
-// #define INSERT 2
-// #define JOIN 3
-// #define ERROR_NEW_SOCKET -1
-// #define BUFFER_SIZE 1024
+#define DEFAULT 'd'
+#define QUIT 'q'
+#define SELECT 's'
+#define INSERT 'i'
+#define JOIN 'j'
+
 #define SELECT_ALL '1'
 #define SELECT_ALL_WHERE ' 2'
 #define SELECT_ALL_COLS ' 3'
@@ -66,7 +65,7 @@ int init();
 int send_request();
 int receive_reply();
 void print_reply();
-int print_result_table();
+int print_result_table(char*);
 void finish();
 int login();
 int logout();
@@ -97,7 +96,7 @@ char statement[STATEMENT_BUFFER_SIZE];
 // Global flag to check connection status
 bool connected = false;
 
-// int choice = DEFAULT;
+char choice[2];
 // bool login_status;
 
 int main(void) 
@@ -138,11 +137,40 @@ int main(void)
         break;
     }
 
+    do
+    {
+        // Display options
+        printf("%c - SELECT\n", SELECT);
+        printf("%c - INSERT\n", INSERT);
+        printf("%c - JOIN\n", JOIN);
+        printf("%c - QUIT\n", QUIT);
+        printf("Instruction: ");
 
+        // Read choice from console
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
 
-    //insert_db();
-    //join_db();
-    select_db();
+        printf("\n");
+        
+        // Replace newline with termination character
+        input_buffer[1] = '\0';
+        strcpy(choice, input_buffer);
+
+        switch (choice[0])
+        {
+        case SELECT:
+            select_db();
+            break;
+        case INSERT:
+            insert_db();
+            break;
+        case JOIN:
+            join_db();
+            break;
+        default:
+            break;
+        }
+
+    } while (choice[0] != QUIT);
 
     // 2. Send request to server
     if (send_request() == ERROR_REQUEST_NOT_SENT)
@@ -164,20 +192,20 @@ int main(void)
 
     // 5. Print reply
     // print_reply();
-    switch (print_result_table())
-    {
-    case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
-        printf("Rows could not be retreived\n");
-        break;
-    case ERROR_RESULT_TABLE_COL_NOT_PARSED:
-        printf("Columns could not be retreived\n");
-        break;
-    case OK_RESULT_TABLE_PARSED:
-        printf("Table parse successful\n");
-        break;
-    default:
-        break;
-    }
+    // switch (print_result_table())
+    // {
+    // case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
+    //     printf("Rows could not be retreived\n");
+    //     break;
+    // case ERROR_RESULT_TABLE_COL_NOT_PARSED:
+    //     printf("Columns could not be retreived\n");
+    //     break;
+    // case OK_RESULT_TABLE_PARSED:
+    //     printf("Table parse successful\n");
+    //     break;
+    // default:
+    //     break;
+    // }
 
     // 6. Logout
     switch (logout())
@@ -193,7 +221,7 @@ int main(void)
     }
     
     // 6. Close socket
-    close(socket_desc);
+    finish();
     printf("Socket closed\n");
     return 0;
 }
@@ -258,14 +286,14 @@ void print_reply()
     //fclose(fptr);
 }
 
-int print_result_table()
+int print_result_table(char* reply)
 {
     //if (connected == false)
       //  return ERROR_SERVER_NOT_CONNECTED;
 
     // Reply
     // PRUEBA: asi debe lucir el mensaje de respuesta del servidor
-    char* reply = "1,2,3\n4,5,6\n7,8,9";
+    //char* reply = "1,2,3\n4,5,6\n7,8,9";
     // Row and column delimiters
     char* delim_row = "\n";
     char* delim_col = ",";
@@ -327,7 +355,7 @@ int print_result_table()
 
 void finish()
 {
-
+    close(socket_desc);
 }
 
 int login()
@@ -558,6 +586,8 @@ int select_all()
         input_buffer[strlen(input_buffer) - 1] = '\0';
     } while (tolower(input_buffer[0]) != 'y');
 
+
+
     return OK_SELECT;
 }
 
@@ -614,6 +644,16 @@ int select_all_where()
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
     } while (tolower(input_buffer[0]) != 'y');
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // print_result_table(reply_buffer);
 
     return OK_SELECT;
 }
@@ -684,8 +724,6 @@ int select_all_cols()
         free(table);
     } while (tolower(input_buffer[0]) != 'y');
 
-    // Statement confirmed
-
     // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
@@ -694,9 +732,7 @@ int select_all_cols()
         // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
-        // Check if login was successful
-        //if (strcmp(reply, "success") == 0)
-            // return OK_LOGIN; // Success
+        // print_result_table(reply_buffer);
 
     return OK_SELECT;
 }
@@ -798,8 +834,6 @@ int select_cols_where()
         free(value);
     } while (tolower(input_buffer[0]) != 'y');
 
-    // Statement confirmed
-
     // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
@@ -808,9 +842,7 @@ int select_cols_where()
         // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
-        // Check if login was successful
-        //if (strcmp(reply, "success") == 0)
-            // return OK_LOGIN; // Success
+        // print_result_table(reply_buffer);
 
     return OK_SELECT;
 }
@@ -905,8 +937,6 @@ int join_db()
         free(table2);
     } while (tolower(input_buffer[0]) != 'y');
 
-    // Statement confirmed
-
     // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
@@ -915,9 +945,7 @@ int join_db()
         // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
-        // Check if login was successful
-        //if (strcmp(reply, "success") == 0)
-            // return OK_LOGIN; // Success
+        // print_result_table(reply_buffer);
 
     return OK_JOIN;
 }
