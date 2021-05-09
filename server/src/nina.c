@@ -13,11 +13,6 @@
 #define SA struct sockaddr
 
 
-// Función para saber cuantos inputs escribió el usuario
-void split(char *msg, char **dest, int *size){
-    //
-}
-
 // Función Select All
 void selectAll(char* buff, char* tabla1){
 	DB *db = load_db("MyDB.txt");
@@ -29,14 +24,39 @@ void selectAll(char* buff, char* tabla1){
 }
 
 // Función Join
-void join(char* buff){
+void join(char *t1, char *t2, char* col1, char* col2){
 	DB *db = load_db("MyDB.txt");
-	char* cols[] = {buff[3], buff[4]};
-	Table *table = join_db(db, buff[1], buff[2], cols);
+	char* cols[] = {col1, col2};
+	Table *table = join_db(db, t1, t2, cols);
 }
 
-// void insert(){
-// }
+// Función para saber cuantos inputs escribió el usuario
+void split(char *buff){
+	DB *db = load_db("MyDB.txt");
+	char ** str_arr = calloc(sizeof(char*), 500);
+	// Extract the first token
+	char * token = strtok(buff, ",");
+	// loop through the string to extract all other tokens
+	int i = 0;
+	while( token != NULL ) {
+		str_arr[i] = strdup(token); //printing each token
+		token = strtok(NULL, ",");
+		i++;
+	}
+	
+	for(int i = 0; str_arr[i] != NULL; i++){
+		printf("%s\n", str_arr[i]);
+	}
+
+	if(strcmp(str_arr[0], "select_all") == 0){
+		selectAll(buff, str_arr[1]);
+	}
+
+	if(strcmp(str_arr[0], "join") == 0){
+		join(str_arr[1], str_arr[2], str_arr[3], str_arr[4]);
+	}
+}
+
 
 // Function designed for chat between client and server.
 void func(int sockfd)
@@ -51,29 +71,11 @@ void func(int sockfd)
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
+
 		char cadenaQuery[sizeof(buff)];
 		char cadenaTabla1[sizeof(buff)];
 		int esComa = 0, sizeQuery = 0, sizeTabla1 = 0;
 		
-        // Obtener el tipo de operacion y tabla1
-		for(int i = 0; i < strlen(buff); i++){
-			if(buff[i] == ','){
-				esComa++;
-			}
-			if(esComa == 0){
-				cadenaQuery[i] = buff[i];
-				printf("Query[%i] = %c\n", sizeQuery, cadenaQuery[sizeQuery]);
-				sizeQuery++;
-			}
-			if(esComa == 1 && buff[i] != ','){
-				cadenaTabla1[sizeTabla1] = buff[i];
-				printf("Tabla1[%i] = %c\n", sizeTabla1, cadenaTabla1[sizeTabla1]);
-				sizeTabla1++;
-			}
-			if(esComa == 2){
-				i = sizeof(buff);
-			}
-		}
 		char* query = malloc(sizeQuery);
 		char* tabla1 = malloc(sizeTabla1);
 		strcat(query, cadenaQuery);
@@ -81,9 +83,7 @@ void func(int sockfd)
 		
 		int inicio = sizeQuery + sizeTabla1 + 1;
 		esComa = 0;
-		//Insert
-		//if(strcmp(query, "insert") == 0){};
-		
+
 		bzero(buff, MAX);
 		n = 0;
 		// copy server message in the buffer
@@ -102,8 +102,7 @@ void func(int sockfd)
 }
 
 // Driver function
-int main()
-{
+int main(){
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
