@@ -34,6 +34,7 @@
 #define OK_LOGIN 0
 #define OK_LOGOUT 0
 #define OK_INSERT 0
+#define OK_SELECT 0
 #define OK_JOIN 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
@@ -54,6 +55,10 @@
 // #define JOIN 3
 // #define ERROR_NEW_SOCKET -1
 // #define BUFFER_SIZE 1024
+#define SELECT_ALL '1'
+#define SELECT_ALL_WHERE ' 2'
+#define SELECT_ALL_COLS ' 3'
+#define SELECT_COLS_WHERE '4'
 
 typedef enum {false, true} bool;
 
@@ -66,6 +71,10 @@ void finish();
 int login();
 int logout();
 int insert_db();
+int select_all();
+int select_all_where();
+int select_all_cols();
+int select_cols_where();
 void select_db();
 int join_db();
 
@@ -129,8 +138,11 @@ int main(void)
         break;
     }
 
+
+
     //insert_db();
-    join_db();
+    //join_db();
+    select_db();
 
     // 2. Send request to server
     if (send_request() == ERROR_REQUEST_NOT_SENT)
@@ -481,7 +493,138 @@ int insert_db()
 
 void select_db()
 {
+    printf("1 All columns from all entries\n");
+    printf("2 All columns from entries that meet a condition\n");
+    printf("3 Certain columns from all entries\n");
+    printf("4 Certain columns from entries that meet a condition\n");
+    printf("Choose type of select operation: ");
 
+    fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+    // Replace newline at the end with termination character
+    input_buffer[strlen(input_buffer) - 1] = '\0';
+
+    switch (input_buffer[0])
+    {
+    // Select all columns from all entries
+    case '1':
+        select_all();
+        break;
+    // Select all columns from entries that meet a condition
+    case '2':
+        select_all_where();
+        break;
+    // Select certain columns from all entries
+    case '3':
+        select_all_cols();
+        break;
+    case '4':
+        select_cols_where();
+        break;
+    default:
+        break;
+    }
+}
+
+int select_all()
+{
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_all,");
+        strcpy(statement, "SELECT * FROM ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        // Append table name to request
+        strcat(statement, input_buffer);
+        strcat(statement, ";");
+        strcat(request_buffer, input_buffer);
+
+        printf("|%s|\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+    } while (tolower(input_buffer[0]) != 'y');
+
+    return OK_SELECT;
+}
+
+int select_all_where()
+{
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_all_where,");
+        strcpy(statement, "SELECT * FROM ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        // Append table name to request
+        strcat(statement, input_buffer);
+        strcat(statement, " WHERE ");
+        strcat(request_buffer, input_buffer);
+
+        // Read column
+        printf("Enter column: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, input_buffer);
+        strcat(statement, " = ");
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        // Read required value
+        printf("Enter required value: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, input_buffer);
+        strcat(statement, ";");
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        printf("|%s|\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+    } while (tolower(input_buffer[0]) != 'y');
+
+    return OK_SELECT;
+}
+
+int select_all_cols()
+{
+    return OK_SELECT;
+}
+
+int select_cols_where()
+{
+    return OK_SELECT;
 }
 
 int join_db()
@@ -504,7 +647,6 @@ int join_db()
 
         // Append table 1 name to request
         strcat(statement, input_buffer);
-        strcat(request_buffer, ",");
         strcat(request_buffer, input_buffer);
 
         // Store table 1 name for later use
