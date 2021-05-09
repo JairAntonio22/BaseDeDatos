@@ -191,7 +191,7 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
             continue;
         }
 
-        data[i] = (char**) calloc(sizeof(char*), ncols);
+        data[rows] = (char**) calloc(sizeof(char*), ncols);
 
         for (int j = 0; j < table->cols; j++) {
             if (mask[j]) {
