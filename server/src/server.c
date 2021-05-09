@@ -28,14 +28,10 @@ void func(int sockfd)
 		// Extract the first token
 		char * token = strtok(buff, ",");
 		// loop through the string to extract all other tokens
-		int i = 0, contador = 0;
+		int contador = 0;
 		while( token != NULL ) {
-			str_arr[i] = strdup(token); //printing each token
+			str_arr[contador] = strdup(token); //printing each token
 			token = strtok(NULL, ",");
-			i++;
-		}
-		for(int i = 0; str_arr[i] != NULL; i++){
-			//printf("%s\n", str_arr[i]);
 			contador++;
 		}
 		DB *db = load_db("MyDB.txt");
@@ -46,7 +42,16 @@ void func(int sockfd)
 				values[i] = str_arr[i+2];
 			}
 			Error error = insert_db(db, str_arr[1], values);
-        	printf("%i\n", error);
+        	
+			if(error == SuccessOperation){
+				save_db(db);
+				char * mensaje = "Success operation";
+				write(sockfd, mensaje, strlen(mensaje));
+			}else{
+				char * mensaje = "ERROR";
+				write(sockfd, mensaje, strlen(mensaje));
+			}
+			
 		}
 		//Select All
 		if(strcmp(str_arr[0], "select_all") == 0){
@@ -67,6 +72,8 @@ void func(int sockfd)
 			printf("%s\n", encode_table(table));
 			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
+			free(where[0]);
+			free(where[1]);
 		}
 		//Select all cols
 		if(strcmp(str_arr[0], "select_all_cols") == 0){
@@ -74,21 +81,29 @@ void func(int sockfd)
 			for(int i = 0; i < contador-2; i++){
 				cols[i] = str_arr[i+2];
 			}
-			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols);
- 			print_table(table);
-			printf("%s\n", encode_table(table));
-			write(sockfd, encode_table(table), strlen(encode_table(table)));
+			Table *table = select_db(db, str_arr[1], contador-2,cols,NULL,select_cols);
+ 			if(table != NULL){
+				print_table(table);
+				printf("%s\n", encode_table(table));
+				write(sockfd, encode_table(table), strlen(encode_table(table)));
+			}
+			
 		}
 		//Select cols where
 		if(strcmp(str_arr[0], "select_cols_where") == 0){
-			char ** cols = calloc(sizeof(char*), contador-2);
-			for(int i = 0; i < contador-2; i++){
-				cols[i] = str_arr[i+2];
+			char ** cols = calloc(sizeof(char*), contador-4);
+			for(int i = 0; i < contador-4; i++){
+				cols[i] = str_arr[i+4];
 			}
-			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols_where);
- 			print_table(table);
-			printf("%s\n", encode_table(table));
-			write(sockfd, encode_table(table), strlen(encode_table(table)));
+			char *where[2];
+            where[0] = strdup(str_arr[2]);
+            where[1] = strdup(str_arr[3]);
+			Table *table = select_db(db, str_arr[1], contador-4,cols,where,select_cols_where);
+ 			if(table != NULL){
+				print_table(table);
+				printf("%s\n", encode_table(table));
+				write(sockfd, encode_table(table), strlen(encode_table(table)));
+			}
 		}
 		//Join
 		if(strcmp(str_arr[0], "join") == 0){
@@ -100,7 +115,7 @@ void func(int sockfd)
 			delete_table(table);
 		}
 		bzero(buff, MAX);
-
+		printf("---------------------\n%s\n",buff);
 		// if msg contains "Exit" then server exit and chat ended.
 		if (strcmp("quit", buff) == 0) {
 			printf("Server Exit...\n");
