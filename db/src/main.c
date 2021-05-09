@@ -3,68 +3,48 @@
 #include "db.h"
 
 int main(void) {
-    if (0) { 
-        DB *db = create_db("MyDB");
+    if (1) { 
+        char *cols[] = {"Usuario", "Password"};
+        Table *users = create_table("Usuarios", 2, cols);
 
         {
-            char *cols[] = {"Nombre", "Edad", "Sexo", "CursoNombre"};
-            add_table(db, "Personas", 4, cols);
-
-            {
-                char *row[] = {"Jair", "21", "Hombre", "Ajedrez"};
-                insert_db(db, "Personas", row);
-            }
-
-            {
-                char *row[] = {"David", "21", "Hombre", "Python"};
-                insert_db(db, "Personas", row);
-            }
-
-            {
-                char *row[] = {"Lorena", "21", "Mujer", "Dibujo"};
-                insert_db(db, "Personas", row);
-            }
-
-            {
-                char *row[] = {"Itzel", "20", "Mujer", "Dibujo"};
-                insert_db(db, "Personas", row);
-            }
+            char *row[] = {"admin", "admin"};
+            insert_table(users, row);
         }
 
         {
-            char *cols[] = {"Nombre", "Categoria"};
-            add_table(db, "Cursos", 2, cols);
-
-            {
-                char *row[] = {"Dibujo", "Arte"};
-                insert_db(db, "Cursos", row);
-            }
-
-            {
-                char *row[] = {"Python", "Programacion"};
-                insert_db(db, "Cursos", row);
-            }
-
-            {
-                char *row[] = {"Ajedrez", "Juegos"};
-                insert_db(db, "Cursos", row);
-            }
+            char *row[] = {"hector", "maestro"};
+            insert_table(users, row);
         }
 
-        save_db(db);
-        delete_db(db);
+        {
+            char *row[] = {"david", "azul"};
+            insert_table(users, row);
+        }
+
+        {
+            char *row[] = {"nina", "cacahuates"};
+            insert_table(users, row);
+        }
+
+        {
+            char *row[] = {"rodrigo", "Kwok"};
+            insert_table(users, row);
+        }
+
+        {
+            char *row[] = {"Jair", "lambda"};
+            insert_table(users, row);
+        }
+
+        save_table(users);
+        delete_table(users);
 
     } else {
         DB *db = load_db("MyDB.txt");
 
         print_table(db->tables[0]);
         print_table(db->tables[1]);
-
-        char *cols[] = {"Nombre"};
-        char *where[] = {"Sexo", "Hombre"};
-        Table *table = select_db(db, "Personas", 1, cols, where);
-        print_table(table);
-        delete_table(table);
 
         char *cols1[] = {"CursoNombre", "Nombre"};
         Table *table1 = join_db(db, "Personas", "Cursos", cols1);
