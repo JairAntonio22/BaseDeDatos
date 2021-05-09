@@ -341,8 +341,7 @@ char* encode_table(Table *table) {
 
     char *msg = (char*) calloc(sizeof(char), 2000);
     char *buffer = (char*) calloc(sizeof(char), 100);
-    char separator[1] = ",";
-    char eof[1] = "\0";
+    char separator[] = ",";
 
     strcat(msg, table->name);
     strcat(msg, separator);
@@ -357,20 +356,12 @@ char* encode_table(Table *table) {
 
     free(buffer);
     
-    for (int i = 0; i < table->rows - 1; i++) {
+    for (int i = 0; i < table->rows; i++) {
         for (int j = 0; j < table->cols; j++) {
             strcat(msg, table->data[i][j]);
             strcat(msg, separator);
         }
     }
-
-    for (int j = 0; j < table->cols - 1; j++) {
-        strcat(msg, table->data[table->rows - 1][j]);
-        strcat(msg, separator);
-    }
-
-    strcat(msg, table->data[table->rows - 1][table->cols - 1]);
-    strcat(msg, eof);
 
     return msg;
 }
