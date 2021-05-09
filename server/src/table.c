@@ -354,7 +354,7 @@ char* encode_table(Table *table) {
 
     return msg;
 }
-}
+
 
 void print_table(Table *table){
     if (table == NULL) {
