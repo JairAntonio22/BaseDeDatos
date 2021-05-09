@@ -24,6 +24,12 @@ void func(int sockfd)
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
+		if (strcmp(buff, "quit") == 0) {
+			printf("Server Exit...\n");
+			char * mensaje = "Log out success";
+			write(sockfd, mensaje, strlen(mensaje));
+			break;
+		}
 		char ** str_arr = calloc(sizeof(char*), 500);
 		// Extract the first token
 		char * token = strtok(buff, ",");
@@ -42,24 +48,49 @@ void func(int sockfd)
 				values[i] = str_arr[i+2];
 			}
 			Error error = insert_db(db, str_arr[1], values);
-        	
-			if(error == SuccessOperation){
-				save_db(db);
-				char * mensaje = "Success operation";
-				write(sockfd, mensaje, strlen(mensaje));
-			}else{
-				char * mensaje = "ERROR";
-				write(sockfd, mensaje, strlen(mensaje));
+        	char * mensaje = "";
+			switch (error)
+			{
+				case SuccessOperation:{
+					Error guardar = save_db(db);
+					if(guardar == SuccessOperation){
+						printf("%s se actualizo correctamente", str_arr[1]);
+						mensaje = "Se realizo el insert de manera exitosa";
+					}else{
+						printf("%s no se pudo actualizar", str_arr[1]);
+						mensaje = "Hubo un problema con al insertar los datos";
+					}
+					write(sockfd, mensaje, strlen(mensaje));
+				break;
+				}
+
+				case NullPtrError:
+					mensaje = "ERROR: la base de datos es nula";
+					write(sockfd, mensaje, strlen(mensaje));
+				break;
+
+				case TableNotFound:
+					mensaje = "ERROR: No se pudo encontrar la tabla ";
+					write(sockfd, mensaje, strlen(mensaje));
+				break;
+				
+				default:
+				printf("ERROR FATAL\n");
+				break;
 			}
-			
 		}
 		//Select All
 		if(strcmp(str_arr[0], "select_all") == 0){
 			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, select_all);
-        	//print_table(table);
+        	if(table != NULL){
+			//print_table(table);
 			//printf("%s\n", encode_table(table));
 			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
+			}else{
+				char * mensaje = "ERROR: Verifica bien los datos";
+				write(sockfd, mensaje, strlen(mensaje));
+			}
 		}
 		//Select All where
 		if(strcmp(str_arr[0], "select_all_where") == 0){
@@ -68,12 +99,17 @@ void func(int sockfd)
             where[1] = strdup(str_arr[3]);
 
 			Table *table = select_db(db, str_arr[1], 0, NULL, where,select_where);
-        	print_table(table);
-			printf("%s\n", encode_table(table));
-			write(sockfd, encode_table(table), strlen(encode_table(table)));
-			delete_table(table);
-			free(where[0]);
-			free(where[1]);
+			if(table != NULL){
+				//print_table(table);
+				//printf("%s\n", encode_table(table));
+				write(sockfd, encode_table(table), strlen(encode_table(table)));
+				delete_table(table);
+				free(where[0]);
+				free(where[1]);
+			}else{
+				char * mensaje = "ERROR: Verifica bien los datos";
+				write(sockfd, mensaje, strlen(mensaje));
+			}
 		}
 		//Select all cols
 		if(strcmp(str_arr[0], "select_all_cols") == 0){
@@ -83,9 +119,12 @@ void func(int sockfd)
 			}
 			Table *table = select_db(db, str_arr[1], contador-2,cols,NULL,select_cols);
  			if(table != NULL){
-				print_table(table);
-				printf("%s\n", encode_table(table));
+				//print_table(table);
+				//printf("%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
+			}else{
+				char * mensaje = "ERROR: Verifica bien los datos";
+				write(sockfd, mensaje, strlen(mensaje));
 			}
 			
 		}
@@ -100,27 +139,34 @@ void func(int sockfd)
             where[1] = strdup(str_arr[3]);
 			Table *table = select_db(db, str_arr[1], contador-4,cols,where,select_cols_where);
  			if(table != NULL){
-				print_table(table);
-				printf("%s\n", encode_table(table));
+				//print_table(table);
+				//printf("%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
+				free(where[0]);
+				free(where[1]);
+			}else{
+				char * mensaje = "ERROR: Verifica bien los datos";
+				write(sockfd, mensaje, strlen(mensaje));
 			}
 		}
 		//Join
 		if(strcmp(str_arr[0], "join") == 0){
 			char *cols[] = {str_arr[3], str_arr[4]};
 			Table *table = join_db(db, str_arr[1], str_arr[2], cols);
-        	//print_table(table);
-			//printf("%s\n", encode_table(table));
-			write(sockfd, encode_table(table), strlen(encode_table(table)));
-			delete_table(table);
+			if(table != NULL){
+				//print_table(table);
+				//printf("%s\n", encode_table(table));
+				write(sockfd, encode_table(table), strlen(encode_table(table)));
+				delete_table(table);
+			}else{
+				char * mensaje = "ERROR: Verifica bien los datos";
+				write(sockfd, mensaje, strlen(mensaje));
+			}
 		}
 		bzero(buff, MAX);
-		printf("---------------------\n%s\n",buff);
+		printf("------------------------------\n");
 		// if msg contains "Exit" then server exit and chat ended.
-		if (strcmp("quit", buff) == 0) {
-			printf("Server Exit...\n");
-			break;
-		}
+		
 	}
 }
 

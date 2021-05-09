@@ -105,7 +105,7 @@ Table* get_table(DB *db, char *name) {
 
     int index = 0;
 
-    while (strcmp(db->tables[index]->name, name) != 0 && index < db->size) {
+    while (index < db->size && strcmp(db->tables[index]->name, name) != 0) {
         index++;
     }
 
