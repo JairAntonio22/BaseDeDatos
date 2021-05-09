@@ -96,7 +96,7 @@ char statement[STATEMENT_BUFFER_SIZE];
 // Global flag to check connection status
 bool connected = false;
 
-char choice[2];
+char choice[2] = "d";
 // bool login_status;
 
 int main(void) 
@@ -436,6 +436,8 @@ int logout()
     // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
     //     return ERROR_REPLY_NOT_RECEIVED;
 
+    printf("\n");
+
     // Logout is successful
     if (strcmp(reply, "success") == 0)
         return OK_LOGOUT;
@@ -516,6 +518,7 @@ int insert_db()
         //if (strcmp(reply, "success") == 0)
             // return OK_LOGIN; // Success
 
+    printf("\n");
     return OK_INSERT;
 }
 
@@ -567,9 +570,6 @@ int select_all()
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
-        
-        // PRUEBA
-        printf("|%s|\n", input_buffer);
 
         // Append table name to request
         strcat(statement, input_buffer);
@@ -587,7 +587,7 @@ int select_all()
     } while (tolower(input_buffer[0]) != 'y');
 
 
-
+    printf("\n");
     return OK_SELECT;
 }
 
@@ -604,9 +604,6 @@ int select_all_where()
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
-        
-        // PRUEBA
-        printf("|%s|\n", input_buffer);
 
         // Append table name to request
         strcat(statement, input_buffer);
@@ -655,6 +652,7 @@ int select_all_where()
 
         // print_result_table(reply_buffer);
 
+    printf("\n");
     return OK_SELECT;
 }
 
@@ -675,9 +673,6 @@ int select_all_cols()
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
         
-        // PRUEBA
-        printf("|%s|\n", input_buffer);
-
         strcat(request_buffer, input_buffer);
 
         table = malloc(strlen(input_buffer));
@@ -734,6 +729,7 @@ int select_all_cols()
 
         // print_result_table(reply_buffer);
 
+    printf("\n");
     return OK_SELECT;
 }
 
@@ -844,6 +840,7 @@ int select_cols_where()
 
         // print_result_table(reply_buffer);
 
+    printf("\n");
     return OK_SELECT;
 }
 
@@ -947,5 +944,6 @@ int join_db()
 
         // print_result_table(reply_buffer);
 
+    printf("\n");
     return OK_JOIN;
 }
