@@ -25,107 +25,53 @@ void func(int sockfd)
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
-		char cadenaQuery[sizeof(buff)];
-		char cadenaTabla1[sizeof(buff)];
-		int esComa = 0, sizeQuery = 0, sizeTabla1 = 0;
-		//Obtener el tipo de operacion y tabla1
-		for(int i = 0; i < strlen(buff); i++){
-			if(buff[i] == ','){
-				esComa++;
-			}
-			if(esComa == 0){
-				cadenaQuery[i] = buff[i];
-				printf("Query[%i] = %c\n", sizeQuery, cadenaQuery[sizeQuery]);
-				sizeQuery++;
-			}
-			if(esComa == 1 && buff[i] != ','){
-				cadenaTabla1[sizeTabla1] = buff[i];
-				printf("Tabla1[%i] = %c\n", sizeTabla1, cadenaTabla1[sizeTabla1]);
-				sizeTabla1++;
-			}
-			if(esComa == 2){
-				i = sizeof(buff);
-			}
+		char ** str_arr = calloc(sizeof(char*), 500);
+		// Extract the first token
+		char * token = strtok(buff, ",");
+		// loop through the string to extract all other tokens
+		int i = 0;
+		while( token != NULL ) {
+			str_arr[i] = strdup(token); //printing each token
+			token = strtok(NULL, ",");
+			i++;
 		}
-		char* query = malloc(sizeQuery);
-		char* tabla1 = malloc(sizeTabla1);
-		strcat(query, cadenaQuery);
-		strcat(tabla1, cadenaTabla1);
-		
+		for(int i = 0; str_arr[i] != NULL; i++){
+			printf("%s\n", str_arr[i]);
+		}
 		DB *db = load_db("MyDB.txt");
-		int inicio = sizeQuery + sizeTabla1 + 1;
-		esComa = 0;
 		//Insert
-		if(strcmp(query, "insert") == 0){
-			/*char* values[] = malloc(strlen(buff-inicio));
-			char* value = malloc(buff-inicio);
-			char cadenaValues[sizeof(buff)];
-			int sizeValues = 0, indexValues = 0;
-			for(int i = inicio; i < strlen(buff); i++){
-				if(buff[i] == ','){
-					char* value = malloc(buff-sizeValues);
-					strcat(value, cadenaValues);
-					values[indexValues] = value;
-					indexValues++;
-					sizeValues = 0;
-				}else{
-					cadenaValues[sizeValues] = buff[i];
-					sizeValues++;
-				}
+		if(strcmp(str_arr[0], "insert") == 0){
+			char ** values = calloc(sizeof(char*), 500);
+			for(int i = 2, j = 0; str_arr[i] != NULL; i++, j++){
+				values[j] = str_arr[i];
 			}
-			Table *table = insert_db(db, tabla1, values);
-        	print_table(table);*/
-		}
-		//Select All
-		if(strcmp(query, "select_all") == 0){
-			Table *table = select_db(db, tabla1, 1, NULL, NULL, NULL);
+			Table *table = insert_db(db, str_arr[1], values);
         	print_table(table);
 			printf("%s\n", encode_table(table));
+			delete_table(table);
+		}
+		//Select All
+		if(strcmp(str_arr[0], "select_all") == 0){
+			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, NULL);
+        	print_table(table);
+			printf("%s\n", encode_table(table));
+			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
+			delete_table(table);
 		}
 		//Join
-		if(strcmp(query, "join") == 0){
-			esComa = 0;
-			char cadenaTabla2[sizeof(buff)], cadenaCol1[sizeof(buff)], cadenaCol2[sizeof(buff)];
-			int sizeTabla2 = 0, sizeCol1 = 0, sizeCol2 = 0;
-			printf("%c", buff[inicio+1]);
-			for(int i = inicio+1; i < strlen(buff); i++){
-				if(buff[i] == ','){
-				esComa++;
-				}
-				if(esComa == 0){
-					cadenaTabla2[i] = buff[i];
-					printf("Tabla2[%i] = %c\n", sizeTabla2, cadenaTabla2[sizeTabla2]);
-					sizeTabla2++;
-				}
-				if(esComa == 1 && buff[i] != ','){
-					cadenaCol1[sizeCol1] = buff[i];
-					printf("Columna1[%i] = %c\n", sizeCol1, cadenaCol1[sizeCol1]);
-					sizeCol1++;
-				}
-				if(esComa == 2 && buff[i] != ','){
-					cadenaCol2[sizeCol2] = buff[i];
-					printf("Columna2[%i] = %c\n", sizeCol2, cadenaCol2[sizeCol2]);
-					sizeCol2++;
-				}
-			}
-			char* tabla2 = malloc(sizeTabla2);
-			char* columna1 = malloc(sizeCol1);
-			char* columna2 = malloc(sizeCol2);
-			strcat(tabla2, cadenaTabla2);
-			strcat(columna1, cadenaCol1);
-			strcat(columna2, cadenaCol2);
-			printf("columna1 = %s  columna2 = %s\n", columna1, columna2);
-			char *cols[] = {columna1, columna2};
-			Table *table = join_db(db, tabla1, "Personas", cols);
+		if(strcmp(str_arr[0], "join") == 0){
+			char *cols[] = {str_arr[3], str_arr[4]};
+			Table *table = join_db(db, str_arr[1], str_arr[2], cols);
         	print_table(table);
+			printf("%s\n", encode_table(table));
+			delete_table(table);
 		}
 		printf("To client : ");
 		bzero(buff, MAX);
 		n = 0;
 		// copy server message in the buffer
-		while ((buff[n++] = getchar()) != '\n')
-			;
-
+		while ((buff[n++] = getchar()) != '\n');
+		
 		// and send that buffer to client
 		write(sockfd, buff, sizeof(buff));
 
