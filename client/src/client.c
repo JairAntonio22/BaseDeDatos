@@ -47,6 +47,7 @@
 #define ERROR_LOGOUT 6
 #define ERROR_RESULT_TABLE_ROW_NOT_PARSED 7
 #define ERROR_RESULT_TABLE_COL_NOT_PARSED 8
+#define ERROR_INSERT 9
 
 #define DEFAULT 'd'
 #define QUIT 'q'
@@ -385,20 +386,19 @@ int login()
         password[strlen(password) - 1] = '\0';
 
         // Join username and password in a comma-separated request to send to server
-        char* request = malloc(strlen("login") + strlen(username) + strlen(password) + 3);
-        strcpy(request, "login,");
-        strcat(request, username);
-        strcat(request, ",");
-        strcat(request, password);
+        strcpy(request_buffer, "login,");
+        strcat(request_buffer, username);
+        strcat(request_buffer, ",");
+        strcat(request_buffer, password);
 
         // PRUEBA: verificar que el mensaje este correctamente formateado
-        printf("|%s|\n", request);
+        printf("|%s|\n", request_buffer);
 
-        // Send request to server
+        // // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
+        // // Receive reply from server
         // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
@@ -408,7 +408,6 @@ int login()
         
         // Failure: try again
         printf("\nUser and password do not match. Try again.\n");
-        free(request);
         max_tries--;
     } while (max_tries > 0);
     
@@ -429,12 +428,12 @@ int logout()
     printf("|%s|\n", request);
 
     // Send request to server
-    // if (send(socket_desc, request, strlen(request), 0) < 0)
-    //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request, strlen(request), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
     // Receive reply from server
-    // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-    //     return ERROR_REPLY_NOT_RECEIVED;
+    if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
     printf("\n");
 
@@ -497,7 +496,7 @@ int insert_db()
         printf("%s\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -507,19 +506,32 @@ int insert_db()
     // Statement confirmed
 
     // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
-        // Check if login was successful
-        //if (strcmp(reply, "success") == 0)
-            // return OK_LOGIN; // Success
+    print_result_table(reply_buffer);
 
     printf("\n");
-    return OK_INSERT;
+
+    // Send request to server
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
+
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
+
+    printf("\n");
+
+    // Check if login was successful
+    if (strcmp(reply_buffer, "success") == 0)
+            return OK_INSERT; // Success
+        
+    return ERROR_INSERT;
 }
 
 void select_db()
@@ -579,7 +591,7 @@ int select_all()
         printf("|%s|\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -587,7 +599,18 @@ int select_all()
     } while (tolower(input_buffer[0]) != 'y');
 
 
+    // Send request to server
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
+
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
+
+    print_result_table(reply_buffer);
+
     printf("\n");
+    
     return OK_SELECT;
 }
 
@@ -635,7 +658,7 @@ int select_all_where()
         printf("|%s|\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -643,14 +666,14 @@ int select_all_where()
     } while (tolower(input_buffer[0]) != 'y');
 
     // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
-        // print_result_table(reply_buffer);
+    print_result_table(reply_buffer);
 
     printf("\n");
     return OK_SELECT;
@@ -710,7 +733,7 @@ int select_all_cols()
         printf("%s\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -720,14 +743,14 @@ int select_all_cols()
     } while (tolower(input_buffer[0]) != 'y');
 
     // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
-        // print_result_table(reply_buffer);
+    print_result_table(reply_buffer);
 
     printf("\n");
     return OK_SELECT;
@@ -819,7 +842,7 @@ int select_cols_where()
         printf("%s\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -831,14 +854,14 @@ int select_cols_where()
     } while (tolower(input_buffer[0]) != 'y');
 
     // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
-        // print_result_table(reply_buffer);
+    print_result_table(reply_buffer);
 
     printf("\n");
     return OK_SELECT;
@@ -924,7 +947,7 @@ int join_db()
         printf("|%s|\n", statement);
         printf("|%s|\n", request_buffer);
 
-        printf("Do yo confirm the execution of this statement? (y/n)");
+        printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
@@ -935,14 +958,14 @@ int join_db()
     } while (tolower(input_buffer[0]) != 'y');
 
     // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
 
-        // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+    // Receive reply from server
+    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+        return ERROR_REPLY_NOT_RECEIVED;
 
-        // print_result_table(reply_buffer);
+    print_result_table(reply_buffer);
 
     printf("\n");
     return OK_JOIN;
