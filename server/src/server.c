@@ -16,7 +16,6 @@
 void func(int sockfd)
 {
 	char buff[MAX];
-	int n;
 	// infinite loop for chat
 	for (;;) {
 		bzero(buff, MAX);
@@ -36,10 +35,9 @@ void func(int sockfd)
 			i++;
 		}
 		for(int i = 0; str_arr[i] != NULL; i++){
-			printf("%s\n", str_arr[i]);
+			//printf("%s\n", str_arr[i]);
 			contador++;
 		}
-		printf("%i\n", contador);
 		DB *db = load_db("MyDB.txt");
 		//Insert
 		if(strcmp(str_arr[0], "insert") == 0){
@@ -53,9 +51,9 @@ void func(int sockfd)
 		//Select All
 		if(strcmp(str_arr[0], "select_all") == 0){
 			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, select_all);
-        	print_table(table);
-			printf("%s\n", encode_table(table));
-			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
+        	//print_table(table);
+			//printf("%s\n", encode_table(table));
+			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
 		}
 		//Select All where
@@ -67,7 +65,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], 0, NULL, where,select_where);
         	print_table(table);
 			printf("%s\n", encode_table(table));
-			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
+			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
 		}
 		//Select all cols
@@ -79,6 +77,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols);
  			print_table(table);
 			printf("%s\n", encode_table(table));
+			write(sockfd, encode_table(table), strlen(encode_table(table)));
 		}
 		//Select cols where
 		if(strcmp(str_arr[0], "select_cols_where") == 0){
@@ -89,26 +88,21 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols_where);
  			print_table(table);
 			printf("%s\n", encode_table(table));
+			write(sockfd, encode_table(table), strlen(encode_table(table)));
 		}
 		//Join
 		if(strcmp(str_arr[0], "join") == 0){
 			char *cols[] = {str_arr[3], str_arr[4]};
 			Table *table = join_db(db, str_arr[1], str_arr[2], cols);
-        	print_table(table);
-			printf("%s\n", encode_table(table));
+        	//print_table(table);
+			//printf("%s\n", encode_table(table));
+			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
 		}
-		printf("To client : ");
 		bzero(buff, MAX);
-		n = 0;
-		// copy server message in the buffer
-		while ((buff[n++] = getchar()) != '\n');
-		
-		// and send that buffer to client
-		write(sockfd, buff, sizeof(buff));
 
 		// if msg contains "Exit" then server exit and chat ended.
-		if (strncmp("exit", buff, 4) == 0) {
+		if (strcmp("quit", buff) == 0) {
 			printf("Server Exit...\n");
 			break;
 		}
