@@ -105,21 +105,40 @@ Table* get_table(DB *db, char *name) {
 
     int index = 0;
 
-    while (strcmp(db->tables[index]->name, name) != 0 && index < db->size) {
+    while (index < db->size && strcmp(db->tables[index]->name, name) != 0 ) {
         index++;
     }
 
     return index == db->size ? NULL : db->tables[index];
 }
 
-Table* select_db(DB *db, char *name, int ncols, char **cols, char **where) {
+Table* select_db(DB *db, char *name, int ncols, char **cols, char **where, Mode mode) {
     if (db == NULL) {
         return NULL;
     }
 
     Table *table = get_table(db, name);
 
-    return table == NULL ? NULL : select_table(table, ncols, cols, where);
+    if (table == NULL) {
+        return NULL;
+    }
+
+    switch (mode) {
+    case select_all:
+        return select_table(table, table->cols, table->data[0], NULL);
+
+    case select_where:
+        return select_table(table, table->cols, table->data[0], where);
+
+    case select_cols:
+        return select_table(table, ncols, cols, NULL);
+
+    case select_cols_where:
+        return select_table(table, ncols, cols, where);
+
+    default:
+        return NULL;
+    }
 }
 
 Table* join_db(DB *db, char *name1, char *name2, char **cols) {

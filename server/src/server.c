@@ -1,5 +1,4 @@
 #include "db.h"
-//#include "../db/src/table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,41 +26,98 @@ void func(int sockfd)
 		// print buffer which contains the client contents
 		printf("From client: %s\n", buff);
 		char cadenaQuery[sizeof(buff)];
-		char cadenaTabla[sizeof(buff)];
-		int esComa = 0, sizeQuery = 0, sizeTabla = 0;
-		for(int i = 0; i < sizeof(buff); i++){
+		char cadenaTabla1[sizeof(buff)];
+		int esComa = 0, sizeQuery = 0, sizeTabla1 = 0;
+		//Obtener el tipo de operacion y tabla1
+		for(int i = 0; i < strlen(buff); i++){
 			if(buff[i] == ','){
 				esComa++;
 			}
 			if(esComa == 0){
 				cadenaQuery[i] = buff[i];
+				printf("Query[%i] = %c\n", sizeQuery, cadenaQuery[sizeQuery]);
 				sizeQuery++;
 			}
 			if(esComa == 1 && buff[i] != ','){
-				cadenaTabla[sizeTabla] = buff[i];
-				sizeTabla++;
+				cadenaTabla1[sizeTabla1] = buff[i];
+				printf("Tabla1[%i] = %c\n", sizeTabla1, cadenaTabla1[sizeTabla1]);
+				sizeTabla1++;
 			}
-			if(buff[i+1] == NULL){
+			if(esComa == 2){
 				i = sizeof(buff);
 			}
 		}
-		char* query = malloc(sizeQuery-1);
-		char* tabla = malloc(sizeTabla);
+		char* query = malloc(sizeQuery);
+		char* tabla1 = malloc(sizeTabla1);
 		strcat(query, cadenaQuery);
-		strcat(tabla, cadenaTabla);
-		printf("Query = %s\n", query, sizeQuery);
-		printf("Tabla = %s\n", tabla);
+		strcat(tabla1, cadenaTabla1);
 		
 		DB *db = load_db("MyDB.txt");
-		char *cols[] = {"Nombre"};
-        char *where[] = {"Sexo", "Hombre"};
-        Table *table = select_db(db, "Personas", 1, cols, where);
-        print_table(table);
-		
-		if(query == "select_all"){
-			printf("SIIIIIIII");
-		}else{
-			printf("NOOOO");
+		int inicio = sizeQuery + sizeTabla1 + 1;
+		esComa = 0;
+		//Insert
+		if(strcmp(query, "insert") == 0){
+			/*char* values[] = malloc(strlen(buff-inicio));
+			char* value = malloc(buff-inicio);
+			char cadenaValues[sizeof(buff)];
+			int sizeValues = 0, indexValues = 0;
+			for(int i = inicio; i < strlen(buff); i++){
+				if(buff[i] == ','){
+					char* value = malloc(buff-sizeValues);
+					strcat(value, cadenaValues);
+					values[indexValues] = value;
+					indexValues++;
+					sizeValues = 0;
+				}else{
+					cadenaValues[sizeValues] = buff[i];
+					sizeValues++;
+				}
+			}
+			Table *table = insert_db(db, tabla1, values);
+        	print_table(table);*/
+		}
+		//Select All
+		if(strcmp(query, "select_all") == 0){
+			Table *table = select_db(db, tabla1, 1, NULL, NULL, NULL);
+        	print_table(table);
+			printf("%s\n", encode_table(table));
+		}
+		//Join
+		if(strcmp(query, "join") == 0){
+			esComa = 0;
+			char cadenaTabla2[sizeof(buff)], cadenaCol1[sizeof(buff)], cadenaCol2[sizeof(buff)];
+			int sizeTabla2 = 0, sizeCol1 = 0, sizeCol2 = 0;
+			printf("%c", buff[inicio+1]);
+			for(int i = inicio+1; i < strlen(buff); i++){
+				if(buff[i] == ','){
+				esComa++;
+				}
+				if(esComa == 0){
+					cadenaTabla2[i] = buff[i];
+					printf("Tabla2[%i] = %c\n", sizeTabla2, cadenaTabla2[sizeTabla2]);
+					sizeTabla2++;
+				}
+				if(esComa == 1 && buff[i] != ','){
+					cadenaCol1[sizeCol1] = buff[i];
+					printf("Columna1[%i] = %c\n", sizeCol1, cadenaCol1[sizeCol1]);
+					sizeCol1++;
+				}
+				if(esComa == 2 && buff[i] != ','){
+					cadenaCol2[sizeCol2] = buff[i];
+					printf("Columna2[%i] = %c\n", sizeCol2, cadenaCol2[sizeCol2]);
+					sizeCol2++;
+				}
+			}
+			char* tabla2 = malloc(sizeTabla2);
+			char* columna1 = malloc(sizeCol1);
+			char* columna2 = malloc(sizeCol2);
+			strcat(tabla2, cadenaTabla2);
+			strcat(columna1, cadenaCol1);
+			strcat(columna2, cadenaCol2);
+			printf("columna1 = %s  columna2 = %s\n", columna1, columna2);
+			char *cols[] = {columna1, columna2};
+			Table *table = join_db(db, tabla1, "Personas", cols);
+        	print_table(table);
 		}
 		printf("To client : ");
 		bzero(buff, MAX);
