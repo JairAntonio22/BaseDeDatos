@@ -141,10 +141,10 @@ int main(void)
     do
     {
         // Display options
-        printf("%c - SELECT\n", SELECT);
-        printf("%c - INSERT\n", INSERT);
-        printf("%c - JOIN\n", JOIN);
-        printf("%c - QUIT\n", QUIT);
+        printf("\t%c - SELECT\n", SELECT);
+        printf("\t%c - INSERT\n", INSERT);
+        printf("\t%c - JOIN\n", JOIN);
+        printf("\t%c - QUIT\n", QUIT);
         printf("Instruction: ");
 
         // Read choice from console
