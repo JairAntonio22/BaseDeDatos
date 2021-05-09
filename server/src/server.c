@@ -29,7 +29,7 @@ void func(int sockfd)
 		// Extract the first token
 		char * token = strtok(buff, ",");
 		// loop through the string to extract all other tokens
-		int i = 0;
+		int i = 0, contador = 0;
 		while( token != NULL ) {
 			str_arr[i] = strdup(token); //printing each token
 			token = strtok(NULL, ",");
@@ -37,26 +37,55 @@ void func(int sockfd)
 		}
 		for(int i = 0; str_arr[i] != NULL; i++){
 			printf("%s\n", str_arr[i]);
+			contador++;
 		}
+		printf("%i\n", contador);
 		DB *db = load_db("MyDB.txt");
 		//Insert
 		if(strcmp(str_arr[0], "insert") == 0){
-			char ** values = calloc(sizeof(char*), 500);
-			for(int i = 2, j = 0; str_arr[i] != NULL; i++, j++){
-				values[j] = str_arr[i];
+			char ** values = calloc(sizeof(char*), contador-2);
+			for(int i = 0; i < contador-2; i++){
+				values[i] = str_arr[i+2];
 			}
-			Table *table = insert_db(db, str_arr[1], values);
-        	print_table(table);
-			printf("%s\n", encode_table(table));
-			delete_table(table);
+			Error *error = insert_db(db, str_arr[1], values);
+        	printf("%i\n", error);
 		}
 		//Select All
 		if(strcmp(str_arr[0], "select_all") == 0){
-			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, NULL);
+			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, select_all);
         	print_table(table);
 			printf("%s\n", encode_table(table));
 			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
 			delete_table(table);
+		}
+		//Select All where
+		if(strcmp(str_arr[0], "select_all_where") == 0){
+			char * where[] = {str_arr[2], str_arr[3]};
+			Table *table = select_db(db, str_arr[1], NULL, NULL, where,select_where);
+        	print_table(table);
+			printf("%s\n", encode_table(table));
+			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
+			delete_table(table);
+		}
+		//Select all cols
+		if(strcmp(str_arr[0], "select_all_cols") == 0){
+			char ** cols = calloc(sizeof(char*), contador-2);
+			for(int i = 0; i < contador-2; i++){
+				cols[i] = str_arr[i+2];
+			}
+			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols);
+ 			print_table(table);
+			printf("%s\n", encode_table(table));
+		}
+		//Select cols where
+		if(strcmp(str_arr[0], "select_cols_where") == 0){
+			char ** cols = calloc(sizeof(char*), contador-2);
+			for(int i = 0; i < contador-2; i++){
+				cols[i] = str_arr[i+2];
+			}
+			Table *table = select_db(db, str_arr[1], 1,NULL,cols,select_cols_where);
+ 			print_table(table);
+			printf("%s\n", encode_table(table));
 		}
 		//Join
 		if(strcmp(str_arr[0], "join") == 0){
