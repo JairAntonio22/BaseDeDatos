@@ -47,7 +47,7 @@ void func(int sockfd)
 			for(int i = 0; i < contador-2; i++){
 				values[i] = str_arr[i+2];
 			}
-			Error *error = insert_db(db, str_arr[1], values);
+			Error error = insert_db(db, str_arr[1], values);
         	printf("%i\n", error);
 		}
 		//Select All
@@ -60,8 +60,11 @@ void func(int sockfd)
 		}
 		//Select All where
 		if(strcmp(str_arr[0], "select_all_where") == 0){
-			char * where[] = {str_arr[2], str_arr[3]};
-			Table *table = select_db(db, str_arr[1], NULL, NULL, where,select_where);
+			char *where[2];
+            where[0] = strdup(str_arr[2]);
+            where[1] = strdup(str_arr[3]);
+
+			Table *table = select_db(db, str_arr[1], 0, NULL, where,select_where);
         	print_table(table);
 			printf("%s\n", encode_table(table));
 			//write(sockfd, encode_table(table), sizeof(encode_table(table)));
@@ -115,7 +118,8 @@ void func(int sockfd)
 // Driver function
 int main()
 {
-	int sockfd, connfd, len;
+	int sockfd, connfd;
+    unsigned int len;
 	struct sockaddr_in servaddr, cli;
 
 	// socket create and verification

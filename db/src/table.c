@@ -339,18 +339,44 @@ char* encode_table(Table *table) {
         return NULL;
     }
 
+    int **widths = (int**) calloc(sizeof(int*), table->rows);
+    int *maxwidths = (int*) calloc(sizeof(int), table->cols);
+
+    for (int i = 0; i < table->rows; i++) {
+        widths[i] = (int*) calloc(sizeof(int), table->cols);
+
+        for (int j = 0; j < table->cols; j++) {
+            widths[i][j] = strlen(table->data[i][j]);
+            maxwidths[j] = widths[i][j] > maxwidths[j] 
+                ? widths[i][j] 
+                : maxwidths[j];
+        }
+    }
+
+    int space = 4;
+
     char *msg = (char*) calloc(sizeof(char), 2000);
     char separator[] = ",";
 
     for (int i = 0; i < table->rows; i++) {
         for (int j = 0; j < table->cols - 1; j++) {
             strcat(msg, table->data[i][j]);
+
+            for (int k = 0; k < maxwidths[j] - widths[i][j] + space; k++) {
+                strcat(msg, " ");
+            }
+
             strcat(msg, separator);
         }
 
         strcat(msg, table->data[i][table->cols - 1]);
         strcat(msg, "\n");
+
+        free(widths[i]);
     }
+
+    free(maxwidths);
+    free(widths);
 
     return msg;
 }
