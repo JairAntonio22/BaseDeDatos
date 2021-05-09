@@ -29,7 +29,7 @@ select_all_where<tabla>,<key>,>value>
 // Selecciona solo las columnas especificadas de todos los registros
 select_all_cols,<table>,<col>, ... ,<col>
 // Selecciona las columnas especificadas de los registros que cumplan con el where
-select_where,<tabla>,<key>,<value>,<col>, ... , <col>
+select_cols_where,<tabla>,<key>,<value>,<col>, ... , <col>
     "1,2,3\n4,5,6,7\n" 
 
 JOIN

@@ -34,6 +34,7 @@
 #define OK_LOGIN 0
 #define OK_LOGOUT 0
 #define OK_INSERT 0
+#define OK_SELECT 0
 #define OK_JOIN 0
 #define OK_REQUEST_SENT 0
 #define OK_REPLY_RECEIVED 0
@@ -47,13 +48,16 @@
 #define ERROR_RESULT_TABLE_ROW_NOT_PARSED 7
 #define ERROR_RESULT_TABLE_COL_NOT_PARSED 8
 
-// #define DEFAULT -1
-// #define QUIT 0
-// #define SELECT 1
-// #define INSERT 2
-// #define JOIN 3
-// #define ERROR_NEW_SOCKET -1
-// #define BUFFER_SIZE 1024
+#define DEFAULT 'd'
+#define QUIT 'q'
+#define SELECT 's'
+#define INSERT 'i'
+#define JOIN 'j'
+
+#define SELECT_ALL '1'
+#define SELECT_ALL_WHERE ' 2'
+#define SELECT_ALL_COLS ' 3'
+#define SELECT_COLS_WHERE '4'
 
 typedef enum {false, true} bool;
 
@@ -61,11 +65,15 @@ int init();
 int send_request();
 int receive_reply();
 void print_reply();
-int print_result_table();
+int print_result_table(char*);
 void finish();
 int login();
 int logout();
 int insert_db();
+int select_all();
+int select_all_where();
+int select_all_cols();
+int select_cols_where();
 void select_db();
 int join_db();
 
@@ -88,7 +96,7 @@ char statement[STATEMENT_BUFFER_SIZE];
 // Global flag to check connection status
 bool connected = false;
 
-// int choice = DEFAULT;
+char choice[2];
 // bool login_status;
 
 int main(void) 
@@ -129,8 +137,40 @@ int main(void)
         break;
     }
 
-    //insert_db();
-    join_db();
+    do
+    {
+        // Display options
+        printf("%c - SELECT\n", SELECT);
+        printf("%c - INSERT\n", INSERT);
+        printf("%c - JOIN\n", JOIN);
+        printf("%c - QUIT\n", QUIT);
+        printf("Instruction: ");
+
+        // Read choice from console
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+
+        printf("\n");
+        
+        // Replace newline with termination character
+        input_buffer[1] = '\0';
+        strcpy(choice, input_buffer);
+
+        switch (choice[0])
+        {
+        case SELECT:
+            select_db();
+            break;
+        case INSERT:
+            insert_db();
+            break;
+        case JOIN:
+            join_db();
+            break;
+        default:
+            break;
+        }
+
+    } while (choice[0] != QUIT);
 
     // 2. Send request to server
     if (send_request() == ERROR_REQUEST_NOT_SENT)
@@ -152,20 +192,20 @@ int main(void)
 
     // 5. Print reply
     // print_reply();
-    switch (print_result_table())
-    {
-    case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
-        printf("Rows could not be retreived\n");
-        break;
-    case ERROR_RESULT_TABLE_COL_NOT_PARSED:
-        printf("Columns could not be retreived\n");
-        break;
-    case OK_RESULT_TABLE_PARSED:
-        printf("Table parse successful\n");
-        break;
-    default:
-        break;
-    }
+    // switch (print_result_table())
+    // {
+    // case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
+    //     printf("Rows could not be retreived\n");
+    //     break;
+    // case ERROR_RESULT_TABLE_COL_NOT_PARSED:
+    //     printf("Columns could not be retreived\n");
+    //     break;
+    // case OK_RESULT_TABLE_PARSED:
+    //     printf("Table parse successful\n");
+    //     break;
+    // default:
+    //     break;
+    // }
 
     // 6. Logout
     switch (logout())
@@ -181,7 +221,7 @@ int main(void)
     }
     
     // 6. Close socket
-    close(socket_desc);
+    finish();
     printf("Socket closed\n");
     return 0;
 }
@@ -246,14 +286,14 @@ void print_reply()
     //fclose(fptr);
 }
 
-int print_result_table()
+int print_result_table(char* reply)
 {
     //if (connected == false)
       //  return ERROR_SERVER_NOT_CONNECTED;
 
     // Reply
     // PRUEBA: asi debe lucir el mensaje de respuesta del servidor
-    char* reply = "1,2,3\n4,5,6\n7,8,9";
+    //char* reply = "1,2,3\n4,5,6\n7,8,9";
     // Row and column delimiters
     char* delim_row = "\n";
     char* delim_col = ",";
@@ -315,7 +355,7 @@ int print_result_table()
 
 void finish()
 {
-
+    close(socket_desc);
 }
 
 int login()
@@ -481,7 +521,330 @@ int insert_db()
 
 void select_db()
 {
+    printf("1 All columns from all entries\n");
+    printf("2 All columns from entries that meet a condition\n");
+    printf("3 Certain columns from all entries\n");
+    printf("4 Certain columns from entries that meet a condition\n");
+    printf("Choose type of select operation: ");
 
+    fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+    // Replace newline at the end with termination character
+    input_buffer[strlen(input_buffer) - 1] = '\0';
+
+    switch (input_buffer[0])
+    {
+    // Select all columns from all entries
+    case '1':
+        select_all();
+        break;
+    // Select all columns from entries that meet a condition
+    case '2':
+        select_all_where();
+        break;
+    // Select certain columns from all entries
+    case '3':
+        select_all_cols();
+        break;
+    // Select certain columns from entries that meet a condition
+    case '4':
+        select_cols_where();
+        break;
+    default:
+        break;
+    }
+}
+
+int select_all()
+{
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_all,");
+        strcpy(statement, "SELECT * FROM ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        // Append table name to request
+        strcat(statement, input_buffer);
+        strcat(statement, ";");
+        strcat(request_buffer, input_buffer);
+
+        printf("|%s|\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+    } while (tolower(input_buffer[0]) != 'y');
+
+
+
+    return OK_SELECT;
+}
+
+int select_all_where()
+{
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_all_where,");
+        strcpy(statement, "SELECT * FROM ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        // Append table name to request
+        strcat(statement, input_buffer);
+        strcat(statement, " WHERE ");
+        strcat(request_buffer, input_buffer);
+
+        // Read column
+        printf("Enter column: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, input_buffer);
+        strcat(statement, " = ");
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        // Read required value
+        printf("Enter required value: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(statement, input_buffer);
+        strcat(statement, ";");
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+
+        printf("|%s|\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+    } while (tolower(input_buffer[0]) != 'y');
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // print_result_table(reply_buffer);
+
+    return OK_SELECT;
+}
+
+int select_all_cols()
+{
+    char* table;
+    
+    // Read insert statement until user confirms their input
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_all_cols,");
+        strcpy(statement, "SELECT ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        strcat(request_buffer, input_buffer);
+
+        table = malloc(strlen(input_buffer));
+        strcpy(table, input_buffer);
+
+        // Read values until user enters empty line
+        printf("Enter columns one per line (enter empty line to finish):\n");
+        do
+        {
+            fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+            // Replace newline at the end with termination character
+            input_buffer[strlen(input_buffer) - 1] = '\0';
+
+            // Append non-empty values to request
+            if (input_buffer[0] != '\0')
+            {
+                strcat(request_buffer, ",");
+                strcat(request_buffer, input_buffer);
+                strcat(statement, input_buffer);
+                strcat(statement, ", ");
+            }
+            
+        } while (input_buffer[0] != '\0');
+
+        statement[strlen(statement) - 2] = ' ';
+        statement[strlen(statement) - 1] = '\0';
+        strcat(statement, "FROM ");
+
+        // Append table name to request
+        strcat(statement, table);
+        
+        // Final statement formating
+        strcat(statement, ";");
+
+        printf("%s\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        free(table);
+    } while (tolower(input_buffer[0]) != 'y');
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // print_result_table(reply_buffer);
+
+    return OK_SELECT;
+}
+
+int select_cols_where()
+{
+    char* table;
+    char* column;
+    char* value;
+    
+    // Read insert statement until user confirms their input
+    do
+    {
+        // Append request type to request
+        strcpy(request_buffer, "select_cols_where,");
+        strcpy(statement, "SELECT ");
+
+        // Read table name
+        printf("Enter table name: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+        
+        // PRUEBA
+        printf("|%s|\n", input_buffer);
+
+        strcat(request_buffer, input_buffer);
+        table = malloc(strlen(input_buffer));
+        strcpy(table, input_buffer);
+
+        // Read column
+        printf("Enter column: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+        column = malloc(strlen(input_buffer));
+        strcpy(column, input_buffer);
+
+        // Read required value
+        printf("Enter required value: ");
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        strcat(request_buffer, ",");
+        strcat(request_buffer, input_buffer);
+        value = malloc(strlen(input_buffer));
+        strcpy(value, input_buffer);
+
+        // Read values until user enters empty line
+        printf("Enter columns one per line (enter empty line to finish):\n");
+        do
+        {
+            fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+            // Replace newline at the end with termination character
+            input_buffer[strlen(input_buffer) - 1] = '\0';
+
+            // Append non-empty values to request
+            if (input_buffer[0] != '\0')
+            {
+                strcat(request_buffer, ",");
+                strcat(request_buffer, input_buffer);
+                strcat(statement, input_buffer);
+                strcat(statement, ", ");
+            }
+            
+        } while (input_buffer[0] != '\0');
+
+        statement[strlen(statement) - 2] = ' ';
+        statement[strlen(statement) - 1] = '\0';
+
+        strcat(statement, "FROM ");
+
+        // Append table name to request
+        strcat(statement, table);
+
+        strcat(statement, " WHERE ");
+        strcat(statement, column);
+        strcat(statement, " = ");
+        strcat(statement, value);
+
+        // Final statement formating
+        strcat(statement, ";");
+
+        printf("%s\n", statement);
+        printf("|%s|\n", request_buffer);
+
+        printf("Do yo confirm the execution of this statement? (y/n)");
+        // Get user confirmation
+        fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
+        // Replace newline at the end with termination character
+        input_buffer[strlen(input_buffer) - 1] = '\0';
+
+        free(table);
+        free(column);
+        free(value);
+    } while (tolower(input_buffer[0]) != 'y');
+
+    // Send request to server
+        // if (send(socket_desc, request, strlen(request), 0) < 0)
+        //     return ERROR_REQUEST_NOT_SENT;
+
+        // Receive reply from server
+        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+        //     return ERROR_REPLY_NOT_RECEIVED;
+
+        // print_result_table(reply_buffer);
+
+    return OK_SELECT;
 }
 
 int join_db()
@@ -504,7 +867,6 @@ int join_db()
 
         // Append table 1 name to request
         strcat(statement, input_buffer);
-        strcat(request_buffer, ",");
         strcat(request_buffer, input_buffer);
 
         // Store table 1 name for later use
@@ -575,8 +937,6 @@ int join_db()
         free(table2);
     } while (tolower(input_buffer[0]) != 'y');
 
-    // Statement confirmed
-
     // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
@@ -585,9 +945,7 @@ int join_db()
         // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
         //     return ERROR_REPLY_NOT_RECEIVED;
 
-        // Check if login was successful
-        //if (strcmp(reply, "success") == 0)
-            // return OK_LOGIN; // Success
+        // print_result_table(reply_buffer);
 
     return OK_JOIN;
 }
