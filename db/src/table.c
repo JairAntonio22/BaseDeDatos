@@ -179,16 +179,18 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
         }
     }
 
-    valid = false;
+    if (where != NULL) {
+        valid = false;
 
-    for (int j = 0; j < table->cols; j++) {
-        if (strcmp(where[0], table->data[0][j]) == 0) {
-            valid = true;
+        for (int j = 0; j < table->cols; j++) {
+            if (strcmp(where[0], table->data[0][j]) == 0) {
+                valid = true;
+            }
         }
-    }
 
-    if (!valid) {
-        return NULL;
+        if (!valid) {
+            return NULL;
+        }
     }
 
 
