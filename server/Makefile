@@ -8,7 +8,7 @@ SRCS=$(wildcard $(SRC)/*.c)
 OBJ=obj
 OBJS=$(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SRCS))
 
-TARGET=server
+TARGET=myDBServerDaemonChido
 
 all:$(TARGET)
 

@@ -8,9 +8,70 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <syslog.h>
 #define MAX 80
 #define PORT 3000
 #define SA struct sockaddr
+FILE *fp= NULL;
+
+// Daemonize
+
+static void daemonize()
+{
+    pid_t pid;
+    
+    /* Fork off the parent process */
+    pid = fork();
+    
+    /* An error occurred */
+    if (pid < 0)
+        exit(EXIT_FAILURE);
+    
+     /* Success: Let the parent terminate */
+    if (pid > 0)
+        exit(EXIT_SUCCESS);
+    
+    /* On success: The child process becomes session leader */
+    if (setsid() < 0)
+        exit(EXIT_FAILURE);
+    
+    /* Catch, ignore and handle signals */
+    /*TODO: Implement a working signal handler */
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    
+    /* Fork off for the second time*/
+    pid = fork();
+    
+    /* An error occurred */
+    if (pid < 0)
+        exit(EXIT_FAILURE);
+    
+    /* Success: Let the parent terminate */
+    if (pid > 0)
+        exit(EXIT_SUCCESS);
+    
+    /* Set new file permissions */
+    umask(027);
+    
+    /* Change the working directory to the root directory */
+    /* or another appropriated directory */
+    //chdir("/Users/Hector/progrAva");
+    
+    /* Close all open file descriptors */
+    int x;
+    for (x = sysconf(_SC_OPEN_MAX); x>=0; x--)
+    {
+        close (x);
+    }
+    
+    /* Open the log file */
+    openlog ("firstdaemon", LOG_PID, LOG_DAEMON);
+}
+
+
 
 // Function designed for chat between client and server.
 void func(int sockfd)
@@ -23,9 +84,9 @@ void func(int sockfd)
 		// read the message from client and copy it in buffer
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
-		printf("From client: %s\n", buff);
+		fprintf(fp, "From client: %s\n", buff);
 		if (strcmp(buff, "quit") == 0) {
-			printf("Server Exit...\n");
+			fprintf(fp, "Server Exit...\n");
 			char * mensaje = "Log out success";
 			write(sockfd, mensaje, strlen(mensaje));
 		}
@@ -47,7 +108,7 @@ void func(int sockfd)
 			for (int i = 1; i < tabla->rows; i++){
 				if(strcmp(tabla->data[i][0], str_arr[1]) == 0){
 					if(strcmp(tabla->data[i][1], str_arr[2]) == 0){
-						printf("Login Successful\n");
+						fprintf(fp, "Login Successful\n");
 						mensaje = "success";
 						write(sockfd, mensaje, strlen(mensaje));
 						existe = 1;
@@ -55,7 +116,7 @@ void func(int sockfd)
 				} 
 			}
 			if(existe == 0){
-				printf("Login Incorrect\n");
+				fprintf(fp, "Login Incorrect\n");
 				mensaje = "error";
 				write(sockfd, mensaje, strlen(mensaje));
 			}
@@ -73,10 +134,10 @@ void func(int sockfd)
 				case SuccessOperation:{
 					Error guardar = save_db(db);
 					if(guardar == SuccessOperation){
-						printf("%s se actualizo correctamente\n", str_arr[1]);
+						fprintf(fp, "%s se actualizo correctamente\n", str_arr[1]);
 						mensaje = "Se realizo el insert de manera exitosa\n";
 					}else{
-						printf("%s no se pudo actualizar\n", str_arr[1]);
+						fprintf(fp, "%s no se pudo actualizar\n", str_arr[1]);
 						mensaje = "Hubo un problema con al insertar los datos\n";
 					}
 					write(sockfd, mensaje, strlen(mensaje));
@@ -104,7 +165,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], 1, NULL, NULL, select_all);
         	if(table != NULL){
 			print_table(table);
-			printf("%s\n", encode_table(table));
+			fprintf(fp, "%s\n", encode_table(table));
 			write(sockfd, encode_table(table), strlen(encode_table(table)));
 			delete_table(table);
 			}else{
@@ -121,7 +182,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], 0, NULL, where,select_where);
 			if(table != NULL){
 				print_table(table);
-				printf("%s\n", encode_table(table));
+				fprintf(fp, "%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
 				delete_table(table);
 				free(where[0]);
@@ -140,7 +201,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], contador-2,cols,NULL,select_cols);
  			if(table != NULL){
 				print_table(table);
-				printf("%s\n", encode_table(table));
+				fprintf(fp, "%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
 				delete_table(table);
 			}else{
@@ -161,7 +222,7 @@ void func(int sockfd)
 			Table *table = select_db(db, str_arr[1], contador-4,cols,where,select_cols_where);
  			if(table != NULL){
 				print_table(table);
-				printf("%s\n", encode_table(table));
+				fprintf(fp, "%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
 				delete_table(table);
 				free(where[0]);
@@ -177,7 +238,7 @@ void func(int sockfd)
 			Table *table = join_db(db, str_arr[1], str_arr[2], cols);
 			if(table != NULL){
 				print_table(table);
-				printf("%s\n", encode_table(table));
+				fprintf(fp, "%s\n", encode_table(table));
 				write(sockfd, encode_table(table), strlen(encode_table(table)));
 				delete_table(table);
 			}else{
@@ -186,7 +247,7 @@ void func(int sockfd)
 			}
 		}
 		bzero(buff, MAX);
-		printf("--------------------------------------------\n");		
+		fprintf(fp, "--------------------------------------------\n");		
 	}
 }
 
@@ -197,14 +258,20 @@ int main()
     unsigned int len;
 	struct sockaddr_in servaddr, cli;
 
+	//starting daemonize
+	printf("Starting daemonize\n");
+    daemonize();
+
+    fp = fopen ("Log.txt", "w+");
+
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1) {
-		printf("socket creation failed...\n");
+		fprintf(fp, "socket creation failed...\n");
 		exit(0);
 	}
 	else
-		printf("Socket successfully created..\n");
+		fprintf(fp, "Socket successfully created..\n");
 	bzero(&servaddr, sizeof(servaddr));
 
 	// assign IP, PORT
@@ -214,33 +281,40 @@ int main()
 
 	// Binding newly created socket to given IP and verification
 	if ((bind(sockfd, (SA*)&servaddr, sizeof(servaddr))) != 0) {
-		printf("socket bind failed...\n");
+		fprintf(fp, "socket bind failed...\n");
 		exit(0);
 	}
 	else
-		printf("Socket successfully binded..\n");
+		fprintf(fp, "Socket successfully binded..\n");
 
 	// Now server is ready to listen and verification
 	if ((listen(sockfd, 5)) != 0) {
-		printf("Listen failed...\n");
+		fprintf(fp, "Listen failed...\n");
 		exit(0);
 	}
 	else
-		printf("Server listening..\n");
+		fprintf(fp, "Server listening..\n");
 	len = sizeof(cli);
 
 	// Accept the data packet from client and verification
 	connfd = accept(sockfd, (SA*)&cli, &len);
 	if (connfd < 0) {
-		printf("server acccept failed...\n");
+		fprintf(fp, "server acccept failed...\n");
 		exit(0);
 	}
 	else
-		printf("server acccept the client...\n");
+		fprintf(fp, "server acccept the client...\n");
 
 	// Function for chatting between client and server
 	func(connfd);
+	
 	// After chatting close the socket
 	close(sockfd);
+
+	fclose(fp);
+	syslog (LOG_NOTICE, "First daemon terminated.");
+    closelog();
+
+	return EXIT_SUCCESS;
 }
 
