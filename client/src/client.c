@@ -69,7 +69,7 @@ void print_reply();
 int print_result_table(char*);
 void finish();
 int login();
-int logout();
+// int logout();
 int insert_db();
 int select_all();
 int select_all_where();
@@ -172,54 +172,6 @@ int main(void)
         }
 
     } while (choice[0] != QUIT);
-
-    // 2. Send request to server
-    if (send_request() == ERROR_REQUEST_NOT_SENT)
-    {
-        printf("Send failed\n");
-        return 1;
-    }
-
-    printf("Data sent\n");
-
-    // 4. Receive reply from server
-    if (receive_reply() == ERROR_REPLY_NOT_RECEIVED)
-    {
-        printf("Reply not received");
-        return 1;
-    }
-
-    printf("Reply received\n");
-
-    // 5. Print reply
-    // print_reply();
-    // switch (print_result_table())
-    // {
-    // case ERROR_RESULT_TABLE_ROW_NOT_PARSED:
-    //     printf("Rows could not be retreived\n");
-    //     break;
-    // case ERROR_RESULT_TABLE_COL_NOT_PARSED:
-    //     printf("Columns could not be retreived\n");
-    //     break;
-    // case OK_RESULT_TABLE_PARSED:
-    //     printf("Table parse successful\n");
-    //     break;
-    // default:
-    //     break;
-    // }
-
-    // 6. Logout
-    switch (logout())
-    {
-    case OK_LOGOUT:
-        printf("Login was succesful\n");
-        break;
-    case ERROR_LOGOUT:
-        printf("Could not logout, try again later\n");
-        break;
-    default:
-        break;
-    }
     
     // 6. Close socket
     finish();
@@ -300,9 +252,11 @@ int print_result_table(char* reply)
     char* delim_col = ",";
 
     // Pointers to receive the beginning of each row and column
-    char *row, *col;
+    char *row = NULL;
+    char *col = NULL;
     // Pointers to maintain context between strtok_r() simultaenous calls
-    char *saveptr1, *saveptr2;
+    char *saveptr1 = NULL;
+    char *saveptr2 = NULL;
 
     // Copy reply to buffer to avoid reference issues after call to strtok_r()
     char* copy = malloc(strlen(reply) + 1);
@@ -362,9 +316,6 @@ int login()
     // Set max number of login attempts
     int max_tries = LOGIN_MAX_TRIES;
     // Buffer to receive reply from server
-    // PRUEBA: el valor es asignado para probar funcionalidad correcta
-    // Cambiar success o failure segun se quiera
-    char* reply = "success";
 
     printf("Please login to continue\n");
 
@@ -389,16 +340,16 @@ int login()
         strcat(request_buffer, ",");
         strcat(request_buffer, password);
 
-        // // Send request to server
-        // if (send(socket_desc, request, strlen(request), 0) < 0)
-        //     return ERROR_REQUEST_NOT_SENT;
+        // Send request to server
+        if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+            return ERROR_REQUEST_NOT_SENT;
 
-        // // Receive reply from server
-        // if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        //     return ERROR_REPLY_NOT_RECEIVED;
+        // Receive reply from server
+        if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
+            return ERROR_REPLY_NOT_RECEIVED;
 
         // Check if login was successful
-        if (strcmp(reply, "success") == 0)
+        if (strcmp(reply_buffer, "success") == 0)
             return OK_LOGIN; // Success
         
         // Failure: try again
@@ -410,32 +361,32 @@ int login()
     return ERROR_LOGIN_MAX_TRIES;
 }
 
-int logout()
-{
-    // PRUEBA: el valor es asignado para probar funcionalidad correcta
-    // Cambiar success o failure segun se quiera
-    char* reply = "success";
+// int logout()
+// {
+//     // PRUEBA: el valor es asignado para probar funcionalidad correcta
+//     // Cambiar success o failure segun se quiera
+//     char* reply = "success";
 
-    // Request to send to server
-    char* request = "logout";
+//     // Request to send to server
+//     char* request = "logout";
 
-    // Send request to server
-    if (send(socket_desc, request, strlen(request), 0) < 0)
-        return ERROR_REQUEST_NOT_SENT;
+//     // Send request to server
+//     if (send(socket_desc, request, strlen(request), 0) < 0)
+//         return ERROR_REQUEST_NOT_SENT;
 
-    // Receive reply from server
-    if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-        return ERROR_REPLY_NOT_RECEIVED;
+//     // Receive reply from server
+//     if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
+//         return ERROR_REPLY_NOT_RECEIVED;
 
-    printf("\n");
+//     printf("\n");
 
-    // Logout is successful
-    if (strcmp(reply, "success") == 0)
-        return OK_LOGOUT;
+//     // Logout is successful
+//     if (strcmp(reply, "success") == 0)
+//         return OK_LOGOUT;
     
-    // Logout not successful
-    return ERROR_LOGOUT;
-}
+//     // Logout not successful
+//     return ERROR_LOGOUT;
+// }
 
 int insert_db()
 {
@@ -501,16 +452,10 @@ int insert_db()
     if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
         return ERROR_REPLY_NOT_RECEIVED;
 
-    // Check if login was successful
-    if (strcmp(reply_buffer, "success") == 0)
-    {
-        print_result_table(reply_buffer);
-        printf("\n");
-        return OK_INSERT; // Success
-    }
-
+    print_result_table(reply_buffer);
     printf("\n");
-    return ERROR_INSERT;
+    
+    return OK_INSERT; // Success
 }
 
 void select_db()
@@ -586,7 +531,6 @@ int select_all()
         return ERROR_REPLY_NOT_RECEIVED;
 
     print_result_table(reply_buffer);
-
     printf("\n");
     
     return OK_SELECT;
@@ -651,8 +595,8 @@ int select_all_where()
         return ERROR_REPLY_NOT_RECEIVED;
 
     print_result_table(reply_buffer);
-
     printf("\n");
+    
     return OK_SELECT;
 }
 
