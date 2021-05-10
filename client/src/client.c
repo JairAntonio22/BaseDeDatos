@@ -8,7 +8,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
+ 
 // Server IP
 #define SERVER_IP "127.0.0.1"
 #define SERVER_LOGIN_REPLY_BUFFER_SIZE 8
@@ -298,8 +298,6 @@ int print_result_table(char* reply)
     // Row and column delimiters
     char* delim_row = "\n";
     char* delim_col = ",";
-    // Separator for final print
-    char* separator = "\t";
 
     // Pointers to receive the beginning of each row and column
     char *row, *col;
@@ -326,11 +324,11 @@ int print_result_table(char* reply)
         return ERROR_RESULT_TABLE_COL_NOT_PARSED;
     
     // Print first col
-    printf("%s%s", col, separator);
+    printf("%s", col);
     
     // Print all remaining cols in current row
     while ((col = strtok_r(NULL, delim_col, &saveptr2)) != NULL)
-        printf("%s%s", col, separator);
+        printf("%s", col);
     printf("\n");
 
     // Parse remaining rows in message
@@ -341,11 +339,11 @@ int print_result_table(char* reply)
             return ERROR_RESULT_TABLE_COL_NOT_PARSED;
 
         // Print first col
-        printf("%s%s", col, separator);
+        printf("%s", col);
 
         // Print all remaining cols in current row
         while ((col = strtok_r(NULL, delim_col, &saveptr2)) != NULL)
-            printf("%s%s", col, separator);
+            printf("%s", col);
         printf("\n");
     }
 
@@ -391,9 +389,6 @@ int login()
         strcat(request_buffer, ",");
         strcat(request_buffer, password);
 
-        // PRUEBA: verificar que el mensaje este correctamente formateado
-        printf("|%s|\n", request_buffer);
-
         // // Send request to server
         // if (send(socket_desc, request, strlen(request), 0) < 0)
         //     return ERROR_REQUEST_NOT_SENT;
@@ -423,9 +418,6 @@ int logout()
 
     // Request to send to server
     char* request = "logout";
-
-    // PRUEBA: verificar que el mensaje este correctamente formateado
-    printf("|%s|\n", request);
 
     // Send request to server
     if (send(socket_desc, request, strlen(request), 0) < 0)
@@ -459,9 +451,6 @@ int insert_db()
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
-        
-        // PRUEBA
-        printf("|%s|\n", input_buffer);
 
         // Append table name to request
         strcat(statement, input_buffer);
@@ -494,7 +483,6 @@ int insert_db()
         statement[strlen(statement) - 1] = ';';
 
         printf("%s\n", statement);
-        printf("|%s|\n", request_buffer);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
@@ -513,24 +501,15 @@ int insert_db()
     if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
         return ERROR_REPLY_NOT_RECEIVED;
 
-    print_result_table(reply_buffer);
-
-    printf("\n");
-
-    // Send request to server
-    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
-        return ERROR_REQUEST_NOT_SENT;
-
-    // Receive reply from server
-    if (recv(socket_desc, reply_buffer, REPLY_BUFFER_SIZE, 0) < 0)
-        return ERROR_REPLY_NOT_RECEIVED;
-
-    printf("\n");
-
     // Check if login was successful
     if (strcmp(reply_buffer, "success") == 0)
-            return OK_INSERT; // Success
-        
+    {
+        print_result_table(reply_buffer);
+        printf("\n");
+        return OK_INSERT; // Success
+    }
+
+    printf("\n");
     return ERROR_INSERT;
 }
 
@@ -588,8 +567,7 @@ int select_all()
         strcat(statement, ";");
         strcat(request_buffer, input_buffer);
 
-        printf("|%s|\n", statement);
-        printf("|%s|\n", request_buffer);
+        printf("%s\n", statement);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
@@ -655,8 +633,7 @@ int select_all_where()
         strcat(request_buffer, ",");
         strcat(request_buffer, input_buffer);
 
-        printf("|%s|\n", statement);
-        printf("|%s|\n", request_buffer);
+        printf("%s\n", statement);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
@@ -731,7 +708,6 @@ int select_all_cols()
         strcat(statement, ";");
 
         printf("%s\n", statement);
-        printf("|%s|\n", request_buffer);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
@@ -774,9 +750,6 @@ int select_cols_where()
         fgets(input_buffer, INPUT_BUFFER_SIZE, stdin);
         // Replace newline at the end with termination character
         input_buffer[strlen(input_buffer) - 1] = '\0';
-        
-        // PRUEBA
-        printf("|%s|\n", input_buffer);
 
         strcat(request_buffer, input_buffer);
         table = malloc(strlen(input_buffer));
@@ -840,7 +813,6 @@ int select_cols_where()
         strcat(statement, ";");
 
         printf("%s\n", statement);
-        printf("|%s|\n", request_buffer);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
@@ -944,8 +916,7 @@ int join_db()
         strcat(statement, ";");
 
         // PRUEBA
-        printf("|%s|\n", statement);
-        printf("|%s|\n", request_buffer);
+        printf("%s\n", statement);
 
         printf("Do you confirm the execution of this statement? (y/n)");
         // Get user confirmation
