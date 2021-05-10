@@ -165,6 +165,35 @@ Table* select_table(Table *table, int ncols, char **cols, char **where) {
         return NULL;
     }
 
+    bool valid = false;
+
+    for (int i = 0; i < ncols; i++) {
+        for (int j = 0; j < table->cols; j++) {
+            if (strcmp(cols[i], table->data[0][j]) == 0) {
+                valid = true;
+            }
+        }
+
+        if (!valid) {
+            return NULL;
+        }
+    }
+
+    if (where != NULL) {
+        valid = false;
+
+        for (int j = 0; j < table->cols; j++) {
+            if (strcmp(where[0], table->data[0][j]) == 0) {
+                valid = true;
+            }
+        }
+
+        if (!valid) {
+            return NULL;
+        }
+    }
+
+
     bool *mask = (bool*) calloc(sizeof(bool), table->cols);
     int *map = (int*) calloc(sizeof(bool), table->cols);
     int w_id;

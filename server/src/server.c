@@ -48,7 +48,7 @@ void func(int sockfd)
 				if(strcmp(tabla->data[i][0], str_arr[1]) == 0){
 					if(strcmp(tabla->data[i][1], str_arr[2]) == 0){
 						printf("Login Successful\n");
-						mensaje = "Login completado exitosamente";
+						mensaje = "success";
 						write(sockfd, mensaje, strlen(mensaje));
 						existe = 1;
 					}
@@ -56,7 +56,7 @@ void func(int sockfd)
 			}
 			if(existe == 0){
 				printf("Login Incorrect\n");
-				mensaje = "Datos incorrectos (intentelo de nuevo)\n";
+				mensaje = "error";
 				write(sockfd, mensaje, strlen(mensaje));
 			}
 		}
@@ -94,7 +94,8 @@ void func(int sockfd)
 				break;
 				
 				default:
-				printf("ERROR FATAL\n");
+					mensaje = "ERROR: La cantidad de values es menor al numero de columnas";
+					write(sockfd, mensaje, strlen(mensaje));
 				break;
 			}
 		}
