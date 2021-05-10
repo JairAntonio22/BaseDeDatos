@@ -69,7 +69,7 @@ void print_reply();
 int print_result_table(char*);
 void finish();
 int login();
-// int logout();
+int logout();
 int insert_db();
 int select_all();
 int select_all_where();
@@ -174,9 +174,10 @@ int main(void)
 
     } while (choice[0] != QUIT);
 
+    logout();
     printf("You have logged out\n");
     
-    // 6. Close socket
+    // Close socket
     finish();
     printf("Socket closed\n");
     return 0;
@@ -360,6 +361,19 @@ int login()
     
     // User exceeded max number of attempts
     return ERROR_LOGIN_MAX_TRIES;
+}
+
+int logout()
+{
+    clear_reply_buffer();
+
+    strcpy(request_buffer, "logout");
+
+    // Send request to server
+    if (send(socket_desc, request_buffer, strlen(request_buffer), 0) < 0)
+        return ERROR_REQUEST_NOT_SENT;
+
+    return OK_LOGOUT;
 }
 
 int insert_db()
@@ -869,5 +883,5 @@ int join_db()
 void clear_reply_buffer()
 {
     for (int i = 0; i < REPLY_BUFFER_SIZE; i++)
-        reply_buffer[i] = '/0';
+        reply_buffer[i] = '\0';
 }
