@@ -115,7 +115,7 @@ int main(void)
         break;
     case ERROR_SERVER_NOT_CONNECTED:
         printf("Could not connect to server\n");
-        //return 1;
+        return 1;
         break;
     default:
         break;
