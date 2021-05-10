@@ -77,6 +77,7 @@ int select_all_cols();
 int select_cols_where();
 void select_db();
 int join_db();
+void clear_reply_buffer();
 
 // Server socket descriptor
 int socket_desc;
@@ -172,6 +173,8 @@ int main(void)
         }
 
     } while (choice[0] != QUIT);
+
+    printf("You have logged out\n");
     
     // 6. Close socket
     finish();
@@ -181,6 +184,8 @@ int main(void)
 
 int init()
 {
+    clear_reply_buffer();
+
     // 1. Create new socket using IPv4 and TCP/IP
     if ((socket_desc = socket(AF_INET, SOCK_STREAM, 0)) == -1)
         return ERROR_SOCKET_NOT_CREATED;
@@ -226,14 +231,8 @@ int receive_reply()
 
 void print_reply()
 {
-    //FILE* fptr;
-    //fopen("reply.txt", "w");
-
     for (int i = 0; i < REPLY_BUFFER_SIZE; i++)
-    {
-        //fprintf(fptr, "%c", reply_buffer[i]);
         printf("%c", reply_buffer[i]);
-    }
         
     printf("\n");
     //fclose(fptr);
@@ -313,6 +312,8 @@ void finish()
 
 int login()
 {
+    clear_reply_buffer();
+
     // Set max number of login attempts
     int max_tries = LOGIN_MAX_TRIES;
     // Buffer to receive reply from server
@@ -361,35 +362,10 @@ int login()
     return ERROR_LOGIN_MAX_TRIES;
 }
 
-// int logout()
-// {
-//     // PRUEBA: el valor es asignado para probar funcionalidad correcta
-//     // Cambiar success o failure segun se quiera
-//     char* reply = "success";
-
-//     // Request to send to server
-//     char* request = "logout";
-
-//     // Send request to server
-//     if (send(socket_desc, request, strlen(request), 0) < 0)
-//         return ERROR_REQUEST_NOT_SENT;
-
-//     // Receive reply from server
-//     if (recv(socket_desc, reply, REPLY_BUFFER_SIZE, 0) < 0)
-//         return ERROR_REPLY_NOT_RECEIVED;
-
-//     printf("\n");
-
-//     // Logout is successful
-//     if (strcmp(reply, "success") == 0)
-//         return OK_LOGOUT;
-    
-//     // Logout not successful
-//     return ERROR_LOGOUT;
-// }
-
 int insert_db()
 {
+    clear_reply_buffer();
+    
     // Read insert statement until user confirms their input
     do
     {
@@ -460,6 +436,8 @@ int insert_db()
 
 void select_db()
 {
+    clear_reply_buffer();
+
     printf("1 All columns from all entries\n");
     printf("2 All columns from entries that meet a condition\n");
     printf("3 Certain columns from all entries\n");
@@ -596,7 +574,7 @@ int select_all_where()
 
     print_result_table(reply_buffer);
     printf("\n");
-    
+
     return OK_SELECT;
 }
 
@@ -785,6 +763,8 @@ int select_cols_where()
 
 int join_db()
 {
+    clear_reply_buffer();
+    
     char* table1;
     char* table2;
 
@@ -884,4 +864,10 @@ int join_db()
 
     printf("\n");
     return OK_JOIN;
+}
+
+void clear_reply_buffer()
+{
+    for (int i = 0; i < REPLY_BUFFER_SIZE; i++)
+        reply_buffer[i] = '/0';
 }
