@@ -80,15 +80,13 @@ void func(int sockfd)
 	// infinite loop for chat
 	for (;;) {
 		bzero(buff, MAX);
-
 		// read the message from client and copy it in buffer
 		read(sockfd, buff, sizeof(buff));
 		// print buffer which contains the client contents
 		fprintf(fp, "From client: %s\n", buff);
-		if (strcmp(buff, "quit") == 0) {
+		if (strcmp(buff, "logout") == 0) {
 			fprintf(fp, "Server Exit...\n");
-			char * mensaje = "Log out success";
-			write(sockfd, mensaje, strlen(mensaje));
+			break;
 		}
 		char ** str_arr = calloc(sizeof(char*), 500);
 		// Extract the first token
@@ -296,25 +294,23 @@ int main()
 		fprintf(fp, "Server listening..\n");
 	len = sizeof(cli);
 
+	while(1){
 	// Accept the data packet from client and verification
 	connfd = accept(sockfd, (SA*)&cli, &len);
 	if (connfd < 0) {
 		fprintf(fp, "server acccept failed...\n");
 		exit(0);
-	}
-	else
-		fprintf(fp, "server acccept the client...\n");
-
-	// Function for chatting between client and server
-	func(connfd);
-	
-	// After chatting close the socket
-	close(sockfd);
-
+		}
+	else{	
+			fprintf(fp, "server acccept the client...\n");
+			// Function for chatting between client and server
+			func(connfd);
+			close(connfd);
+		}	
+	}	
 	fclose(fp);
 	syslog (LOG_NOTICE, "First daemon terminated.");
     closelog();
-
 	return EXIT_SUCCESS;
 }
 
